@@ -8,10 +8,11 @@ public class PlayerInputManager : MonoBehaviour
     [SerializeField] private PlayerInput playerInput;
 
 
-    public static Action<Vector2> onWalk;
+    public static Action<Vector2> onMove;
 
-    public static Action onJump; 
+    public static Action onJump;
 
+    public static Action onInteract;
 
     //hmmm
     //public static Func<Vector2, Vector2> onWalk;
@@ -23,16 +24,21 @@ public class PlayerInputManager : MonoBehaviour
 
     private InputAction moveAction; 
     private InputAction jumpAction; 
+    private InputAction interactAction; 
 
     void Awake()
     {
         moveAction = playerInput.actions["Move"];
         jumpAction = playerInput.actions["Jump"];
+        interactAction = playerInput.actions["Interact"];
 
         if (moveAction != null)
             moveAction.Enable();
         if (jumpAction != null)
             jumpAction.Enable();
+        if (interactAction != null)
+            interactAction.Enable();
+
     }
 
     // Update is called once per frame
@@ -41,6 +47,8 @@ public class PlayerInputManager : MonoBehaviour
         HandleWalkInput();
 
         HandleJumpInput();
+
+        HandleInteractInput();
     }
 
     private void HandleWalkInput()
@@ -49,7 +57,7 @@ public class PlayerInputManager : MonoBehaviour
 
         //Vector2 moveDirection = transform.right * inputDirection.x + transform.forward * inputDirection.y;
 
-        onWalk?.Invoke(inputDirection);
+        onMove?.Invoke(inputDirection);
 
         //if (moveDirection != Vector2.zero)
         //{
@@ -62,6 +70,14 @@ public class PlayerInputManager : MonoBehaviour
         if (jumpAction.WasPressedThisFrame())
         {
             onJump?.Invoke();
+        }
+    }
+
+    private void HandleInteractInput()
+    {
+        if (interactAction.WasPressedThisFrame())
+        {
+            onInteract?.Invoke();   
         }
     }
 

@@ -16,9 +16,11 @@ public class PlayerMovement : MonoBehaviour
     private Vector3 cameraForward = Vector3.zero;
     private Vector3 cameraRight = Vector3.zero;
 
-    private float yRotation; 
+    private float yRotation;
 
+    private bool isPlayerDriving = false; 
 
+        
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -28,20 +30,21 @@ public class PlayerMovement : MonoBehaviour
 
     private void OnEnable()
     {
-        PlayerInputManager.onWalk += CalculateHorizontalVelocity;
-        PlayerInputManager.onJump += CalculateJumpVelocity; 
+        PlayerInputManager.onMove += CalculateHorizontalVelocity;
+        PlayerInputManager.onJump += CalculateJumpVelocity;
 
+        ShipWheel.onPlayerAtWheel += HandlePlayerDriveShip;
         CameraController.onFirstPersonCameraRotate += ReadCameraRotation; 
 
     }
 
     private void OnDisable()
     {
-        PlayerInputManager.onWalk -= CalculateHorizontalVelocity;
+        PlayerInputManager.onMove -= CalculateHorizontalVelocity;
         PlayerInputManager.onJump -= CalculateJumpVelocity;
 
+        ShipWheel.onPlayerAtWheel -= HandlePlayerDriveShip;
         CameraController.onFirstPersonCameraRotate -= ReadCameraRotation;
-
     }
 
     // Update is called once per frame
@@ -62,7 +65,10 @@ public class PlayerMovement : MonoBehaviour
         yRotation = CalculateCharacterRotation().eulerAngles.y;
 
         transform.rotation = Quaternion.Euler(transform.rotation.eulerAngles.x, yRotation ,transform.rotation.eulerAngles.z);
-        characterController.Move(finalVelocity);
+
+
+        if (!isPlayerDriving)
+            characterController.Move(finalVelocity);
     }
 
     Quaternion CalculateCharacterRotation()
@@ -94,6 +100,12 @@ public class PlayerMovement : MonoBehaviour
     {
         Vector3 directionVector = transform.right * dir.x + transform.forward * dir.y;
         horizontalVelocity = directionVector * moveSpeed;
+    }
+
+
+    void HandlePlayerDriveShip(bool condition)
+    {
+        isPlayerDriving = condition; 
     }
 
 }

@@ -7,6 +7,7 @@ using UnityEngine;
 
 public enum CAMERATYPE { 
     FIRST_PERSON, 
+    SHIP_CAMERA,
     NUM_TYPE
 }
 
@@ -30,8 +31,20 @@ public class CameraController : MonoBehaviour
     void Awake()
     {
 
-        EnableCamera(CAMERATYPE.FIRST_PERSON);
+        ChangeCamera(CAMERATYPE.FIRST_PERSON);
+        LockCursor(true);
 
+    }
+
+
+    private void OnEnable()
+    {
+        ShipWheel.onPlayerAtWheel += ChangeToShipCamera;
+    }
+
+    private void OnDisable()
+    {
+        ShipWheel.onPlayerAtWheel -= ChangeToShipCamera;
     }
 
     // Update is called once per frame
@@ -43,15 +56,10 @@ public class CameraController : MonoBehaviour
 
         if (activeCameraCat.type == CAMERATYPE.FIRST_PERSON)
             HandleFirstPersonCamera();
-
-
-
     }
 
     void HandleFirstPersonCamera()
     {
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
         //float yRotateAngle = activeCameraCat.camera.transform.rotation.eulerAngles.y;
 
         //onFirstPersonCameraRotate.Invoke(yRotateAngle);
@@ -63,17 +71,45 @@ public class CameraController : MonoBehaviour
 
     }
 
-
-    void EnableCamera(CAMERATYPE type)
+    void ChangeToShipCamera(bool condition)
     {
-
-        foreach (CameraCatagory camera in cameraList)
+        if (condition)
         {
-            if (camera.type == type)
-            {
-                activeCameraCat = camera;
-                return;
-            }
+            ChangeCamera(CAMERATYPE.SHIP_CAMERA);
         }
+        else if (!condition)
+        {
+            ChangeCamera(CAMERATYPE.FIRST_PERSON);
+        }
+    }
+
+
+    void ChangeCamera(CAMERATYPE type)
+    {
+        foreach (CameraCatagory camCategory in cameraList)
+        {
+            if (camCategory.type == type)
+            {
+                activeCameraCat = camCategory;
+                activeCameraCat.camera.gameObject.SetActive(true);
+            }
+            else
+                camCategory.camera.gameObject.SetActive(false);
+        }
+    }
+
+    void LockCursor(bool condition)
+    {
+        if (condition)
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+        }
+        else
+        {
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
+
     }
 }
