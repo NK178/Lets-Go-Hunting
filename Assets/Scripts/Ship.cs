@@ -12,18 +12,26 @@ public class Ship : MonoBehaviour
 
 
 
-    [SerializeField] private ShipWheel shipWheel; 
-
+    [SerializeField] private ShipWheel shipWheel;
+    [SerializeField] private GameObject shipRudder; 
+    [SerializeField] private GameObject shipPropeller; 
     [SerializeField] private float moveSpeed;
 
     [SerializeField] private float angularDamping; 
     [SerializeField] private float maxAngularPower;
+
+
+    [SerializeField] private float propellerRotationDamping;
+    [SerializeField] private float maxPropellerRotateSpeed; 
+
 
     private float propellerPower;
     private float rudderAngle;
     private float rudderForce; 
 
     private Vector3 currentVelocity;
+    private Vector3 movementVector; 
+    private Vector3 rotationVector; 
 
     private float angularPower; 
     private bool isPlayerOnShip;
@@ -54,6 +62,8 @@ public class Ship : MonoBehaviour
     private void FixedUpdate()
     {
         currentVelocity = transform.forward * propellerPower;
+        //movementVector = transform.forward * propellerPower;
+
 
         angularPower = Mathf.Lerp(angularPower, rudderForce, angularDamping * Time.deltaTime);
         angularPower = Mathf.Clamp(angularPower, -maxAngularPower, maxAngularPower);
@@ -70,6 +80,9 @@ public class Ship : MonoBehaviour
     void ReadPropeller(float power)
     {
         propellerPower = power;
+
+
+        //shipPropeller.transform.rotation
     }
 
 
@@ -81,6 +94,13 @@ public class Ship : MonoBehaviour
 
         //simplified rudder formula 
         rudderForce = propellerPower * angle * kFactor;
+
+
+        shipRudder.transform.rotation = Quaternion.Euler(shipRudder.transform.eulerAngles.x,
+                                                         angle,
+                                                         shipRudder.transform.eulerAngles.z);
+
+
     }
 
     private void OnTriggerEnter(Collider other)

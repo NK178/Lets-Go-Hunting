@@ -14,6 +14,8 @@ public class PlayerInputManager : MonoBehaviour
 
     public static Action onInteract;
 
+    public static Action onLeftClick; 
+
     //hmmm
     //public static Func<Vector2, Vector2> onWalk;
 
@@ -25,12 +27,15 @@ public class PlayerInputManager : MonoBehaviour
     private InputAction moveAction; 
     private InputAction jumpAction; 
     private InputAction interactAction; 
+    private InputAction leftClickAction; 
+
 
     void Awake()
     {
         moveAction = playerInput.actions["Move"];
         jumpAction = playerInput.actions["Jump"];
         interactAction = playerInput.actions["Interact"];
+        leftClickAction = playerInput.actions["Attack"];
 
         if (moveAction != null)
             moveAction.Enable();
@@ -38,6 +43,8 @@ public class PlayerInputManager : MonoBehaviour
             jumpAction.Enable();
         if (interactAction != null)
             interactAction.Enable();
+        if (leftClickAction != null)
+            leftClickAction.Enable();   
 
     }
 
@@ -49,6 +56,8 @@ public class PlayerInputManager : MonoBehaviour
         HandleJumpInput();
 
         HandleInteractInput();
+
+        HandleLeftClickInput();
     }
 
     private void HandleWalkInput()
@@ -78,6 +87,14 @@ public class PlayerInputManager : MonoBehaviour
         if (interactAction.WasPressedThisFrame())
         {
             onInteract?.Invoke();   
+        }
+    }
+
+    private void HandleLeftClickInput()
+    {
+        if (leftClickAction.WasPressedThisFrame())
+        {
+            onLeftClick?.Invoke();
         }
     }
 

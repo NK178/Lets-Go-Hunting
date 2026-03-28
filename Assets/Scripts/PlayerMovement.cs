@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
@@ -7,6 +8,7 @@ public class PlayerMovement : MonoBehaviour
 
 
     [SerializeField] private CharacterController characterController;
+    [SerializeField] private Transform gunPlaceholder; 
     [SerializeField] private float moveSpeed;
     [SerializeField] private float jumpPower;
     [SerializeField] private float gravityPower;
@@ -18,8 +20,9 @@ public class PlayerMovement : MonoBehaviour
 
     private float yRotation;
 
-    private bool isPlayerDriving = false; 
+    private bool isPlayerDriving = false;
 
+    public static Action<Vector3> onGunPlaceholderMove; 
         
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -94,12 +97,16 @@ public class PlayerMovement : MonoBehaviour
         verticalVelocity = Vector3.zero; 
         Vector3 jumpVelocity = Vector3.up * jumpPower;
         verticalVelocity += jumpVelocity;
+
+        onGunPlaceholderMove?.Invoke(gunPlaceholder.position);
     }
 
     void CalculateHorizontalVelocity(Vector2 dir)
     {
         Vector3 directionVector = transform.right * dir.x + transform.forward * dir.y;
         horizontalVelocity = directionVector * moveSpeed;
+
+        onGunPlaceholderMove?.Invoke(gunPlaceholder.position);
     }
 
 
