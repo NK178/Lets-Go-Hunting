@@ -14,7 +14,9 @@ public class PlayerInputManager : MonoBehaviour
 
     public static Action onInteract;
 
-    public static Action onLeftClick; 
+    public static Action onLeftMouseClick; 
+
+    public static Action onLeftMouseHold; 
 
     //hmmm
     //public static Func<Vector2, Vector2> onWalk;
@@ -57,7 +59,9 @@ public class PlayerInputManager : MonoBehaviour
 
         HandleInteractInput();
 
-        HandleLeftClickInput();
+        HandleLeftMouseInput();
+
+
     }
 
     private void HandleWalkInput()
@@ -90,14 +94,18 @@ public class PlayerInputManager : MonoBehaviour
         }
     }
 
-    private void HandleLeftClickInput()
+    private void HandleLeftMouseInput()
     {
         if (leftClickAction.WasPressedThisFrame())
         {
-            onLeftClick?.Invoke();
+            onLeftMouseClick?.Invoke();
+        }
+
+        if (leftClickAction.IsPressed())
+        {
+            onLeftMouseHold?.Invoke();
         }
     }
-
 
     
 }

@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 368155c6b8321ac47a7ff3c8649ea050, type: 3}
   m_Name: M1911 Data
   m_EditorClassIdentifier: Assembly-CSharp::GunData
+  type: 0
   magazineAmmo: 9
-  fireRate: 0.5
+  fireRate: 0.2
   damage: 10

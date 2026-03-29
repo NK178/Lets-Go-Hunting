@@ -1,6 +1,7 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using UnityEngine.Rendering;
 
 public enum GUNTYPE {
     M1911,
@@ -8,48 +9,62 @@ public enum GUNTYPE {
     NUM_TYPE
 }
 
-
 [System.Serializable]
 public class GunTypeContainer
 {
-    public GUNTYPE type;
     public GunData gunData;
     public GameObject model;
-    public GameObject firePoint; 
 }
 
 public class GunManager : MonoBehaviour
 {
 
-    [SerializeField] private GameObject DEBUG_GunMuzzleFlash; 
+    [SerializeField] private GameObject DEBUG_GunMuzzleFlash;
 
 
+    [SerializeField] private LayerMask enemyLayerMask;
+    [SerializeField] private TrailRenderer bulletTrailPrefab;
     [SerializeField] private GUNTYPE startingType; 
+
+
+    [SerializeField] private float trailSpeed = 15;
+    [SerializeField] private float gunVerticalLerpFactor;
+
+    [SerializeField] private float autoReloadTime = 0.3f;
+
     [SerializeField] private List<GunTypeContainer> containerList;
 
-
-    [SerializeField] private float gunVerticalLerpFactor; 
-    
-
     private GunTypeContainer currentGunContainer;
+    private int currentGunAmmo; 
     private Vector3 gunTargetPosition; 
-    private Vector3 gunFacingDirection; 
+    private Vector3 gunFacingDirection;
+
+    private Transform currentFirePoint;
+
+    private bool firedGun;
+    private bool isReloading; 
+    private IEnumerator fireRateCoroutine = null;
+
+    private float fireRateTimer = 0; 
 
     void Awake()
     {
         ChangeGun(startingType);
+
+        firedGun = false;
+        isReloading = false;
     }
 
     private void OnEnable()
     {
-        PlayerInputManager.onLeftClick += ShootWeapon;
+        PlayerInputManager.onLeftMouseHold += ShootWeapon;
         CameraController.onFirstPersonCameraRotate += ReadCameraTransform;
         PlayerMovement.onGunPlaceholderMove += HandleGunTargetPosition;
     }
 
     private void OnDisable()
     {
-        PlayerInputManager.onLeftClick -= ShootWeapon;
+        PlayerInputManager.onLeftMouseHold -= ShootWeapon;
         CameraController.onFirstPersonCameraRotate -= ReadCameraTransform;
         PlayerMovement.onGunPlaceholderMove -= HandleGunTargetPosition;
     }
@@ -57,14 +72,20 @@ public class GunManager : MonoBehaviour
     // Update is called once per frame
     void Update()   
     {
-
-
-        currentGunContainer.model.transform.position = gunTargetPosition; 
-
-
-        float lerpFactor = 2f;
+        currentGunContainer.model.transform.position = gunTargetPosition;
         Vector3 lerpVector = Vector3.Lerp(currentGunContainer.model.transform.forward, gunFacingDirection, Time.deltaTime * gunVerticalLerpFactor);
         currentGunContainer.model.transform.rotation = Quaternion.LookRotation(lerpVector);
+
+
+        if (firedGun)
+        {
+            fireRateTimer += Time.deltaTime; 
+            if (fireRateTimer > currentGunContainer.gunData.fireRate)
+            {
+                fireRateTimer = 0f;
+                firedGun = false; 
+            }
+        }
     }
 
 
@@ -83,31 +104,98 @@ public class GunManager : MonoBehaviour
         //currentGunContainer.model.transform.rotation = Quaternion.LookRotation(-forward);
     }
 
+    private IEnumerator ShootFireRateCoroutine()
+    {
+        if (currentGunContainer == null)
+            yield return null;
+        yield return new WaitForSeconds(currentGunContainer.gunData.fireRate);
+        Debug.Log("FIRED GUN FALSE");
+        firedGun = false;
+        fireRateCoroutine = null;
+    }
 
     private void ShootWeapon()
     {
 
-        if (currentGunContainer == null)
-            return; 
+        if (currentGunContainer == null || firedGun || isReloading)
+            return;
 
 
-        Debug.Log("FIRING WEAPON CHECK AMMO: " + currentGunContainer.gunData.magazineAmmo);
+        fireRateTimer = 0f;
+        firedGun = true;
 
-        GameObject firePoint = currentGunContainer.firePoint;
+        currentGunAmmo -= 1;
+        if (currentGunAmmo <= 0)
+            StartCoroutine(ReloadCoroutine());
 
-        GameObject instance = Instantiate(DEBUG_GunMuzzleFlash, firePoint.transform);
+        //if (fireRateCoroutine == null)
+        //{
+        //    fireRateCoroutine = ShootFireRateCoroutine();
+        //    StartCoroutine(fireRateCoroutine);
+        //}
+        Debug.Log("CURRENT AMMO: " + currentGunAmmo);
+        GameObject instance = Instantiate(DEBUG_GunMuzzleFlash, currentFirePoint.transform);
+        HandleHitScanShoot();
+    }
+
+
+    private void HandleHitScanShoot()
+    {
+        int distance = 100;
+        RaycastHit hitInfo;
+        Physics.Raycast(currentFirePoint.position, currentFirePoint.forward, out hitInfo, enemyLayerMask, distance);
+
+        if (hitInfo.collider != null)
+        {
+            Debug.Log("Hit something");
+
+            if (hitInfo.collider.TryGetComponent<Enemy>(out Enemy enemy))
+            {
+                enemy.TakeDamage(currentGunContainer.gunData.damage);
+            }
+        }
+        HandleBulletTrail();
+    }
+
+    private IEnumerator ReloadCoroutine()
+    {
+        isReloading = true;
+        yield return new WaitForSeconds(autoReloadTime);
+        currentGunAmmo = currentGunContainer.gunData.magazineAmmo;
+        isReloading = false;
+    }
+
+    private void HandleBulletTrail()
+    {
+        TrailRenderer trail = Instantiate(bulletTrailPrefab, currentFirePoint.position, currentFirePoint.rotation);
+        StartCoroutine(BulletTrailCoroutine(trail, currentFirePoint.forward)); 
+    }
+
+
+    private IEnumerator BulletTrailCoroutine(TrailRenderer trail, Vector3 direction)
+    {
+        float timer = 0;
+        while (timer < 1)
+        {
+            trail.transform.position += direction * trailSpeed * timer;
+            timer += Time.deltaTime / trail.time;
+            yield return null;
+        }
+
+        Destroy(trail.gameObject, trail.time);
     }
 
     private void ChangeGun(GUNTYPE gunType)
     {
         foreach (GunTypeContainer container in containerList)
         {
-            
             container.model.SetActive(false);
-            if (container.type == gunType)
+            if (container.gunData.type == gunType)
             {
                 container.model.SetActive(true);
                 currentGunContainer = container;
+                currentGunAmmo = currentGunContainer.gunData.magazineAmmo;
+                currentFirePoint = container.model.transform.Find("FirePoint");
             }
         }
 
