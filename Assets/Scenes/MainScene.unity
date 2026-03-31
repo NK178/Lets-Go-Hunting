@@ -1415,7 +1415,7 @@ MonoBehaviour:
     m_Bits: 64
   bulletTrailPrefab: {fileID: 6731324645718166528, guid: ce8de25f66139724581e3faa58f63445, type: 3}
   startingType: 1
-  trailSpeed: 15
+  trailSpeed: 20
   gunVerticalLerpFactor: 4
   autoReloadTime: 0.4
   containerList:
@@ -2009,6 +2009,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1008773775}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &795463908
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 795463909}
+  m_Layer: 0
+  m_Name: SwordFishSpawn
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &795463909
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 795463908}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 863553645}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!43 &803582259
 Mesh:
   m_ObjectHideFlags: 0
@@ -2387,6 +2418,53 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!1 &863553643
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 863553645}
+  - component: {fileID: 863553644}
+  m_Layer: 0
+  m_Name: Shark Section 1
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &863553644
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 863553643}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce279d236ab852a4fa3b5a518eac92bb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SectionManager
+  waveDataList:
+  - {fileID: 11400000, guid: e4004f1e9e45e3e4fbeccdd6350ebc34, type: 2}
+--- !u!4 &863553645
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 863553643}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 14.4008, y: -11.25, z: -28.18999}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 795463909}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &865650333
 GameObject:
   m_ObjectHideFlags: 0
@@ -9626,9 +9704,13 @@ MonoBehaviour:
   enemyData: {fileID: 11400000, guid: 7cda733eae993fa4a94e211371e22370, type: 2}
   flightTime: 3
   gravity: 0
+  maxFlightTime: 4
+  minFlightTime: 2
+  numOfHopsMax: 4
+  numOfHopsMin: 3
+  maxTargetDistPercentage: 0.2
+  minTargetDistPercentage: 0.4
   endTarget: {fileID: 2118343168}
-  numOfHopsMax: 2
-  numOfHopsMin: 5
 --- !u!1 &1703648567
 GameObject:
   m_ObjectHideFlags: 0
@@ -187499,6 +187581,54 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 75aeffeed5a736f46afbef3a42e93fab, type: 3}
+--- !u!1 &2138704230
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2138704232}
+  - component: {fileID: 2138704231}
+  m_Layer: 0
+  m_Name: Game Manager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &2138704231
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2138704230}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 23c6645f89a0b3041bdb93257a222ab4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameManager
+  DEBUG_SkipMenu: 1
+  sectionsList:
+  - {fileID: 863553644}
+  currentGameState: 0
+--- !u!4 &2138704232
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2138704230}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 6.98065, y: 10.89, z: 8.40503}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1324606754981385
 GameObject:
   m_ObjectHideFlags: 0
@@ -191051,3 +191181,5 @@ SceneRoots:
   - {fileID: 2118343169}
   - {fileID: 1703648573}
   - {fileID: 82141822}
+  - {fileID: 2138704232}
+  - {fileID: 863553645}
