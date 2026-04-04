@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 
 
@@ -8,6 +7,7 @@ using UnityEngine;
 public class SectionManager : MonoBehaviour
 {
 
+    [SerializeField] private int sectionIndex; 
     [SerializeField] private List<BaseWaveFunction> waveDataList;
 
 
@@ -18,10 +18,17 @@ public class SectionManager : MonoBehaviour
     private bool isSectionOver = false;
     private bool isSectionActive = false; 
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+
+    void Awake()
     {
         currentWaveIndex = 0;
+
+        //register itself with the Game Manager 
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.RegisterSection(this);
+        }
+
     }
 
     // Update is called once per frame
@@ -64,5 +71,10 @@ public class SectionManager : MonoBehaviour
     public bool IsSectionOver()
     {
         return isSectionOver;
+    }
+
+    public int GetSectionIndex()
+    {
+        return sectionIndex;
     }
 }

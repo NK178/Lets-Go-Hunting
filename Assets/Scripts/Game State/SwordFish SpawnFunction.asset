@@ -13,5 +13,8 @@ MonoBehaviour:
   m_Name: SwordFish SpawnFunction
   m_EditorClassIdentifier: Assembly-CSharp::SpawnerWaveFunction
   waveType: 0
+  enemyPrefab: {fileID: 7752439744088749315, guid: e24134e47c2fba647878386b148e63b9, type: 3}
+  shipTargetPointName: ShipPoint
   spawnPointName: SwordFishSpawn
   waveInterval: 2
+  spawnWidthDeviateRange: 2.92

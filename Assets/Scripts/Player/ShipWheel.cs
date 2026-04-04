@@ -18,6 +18,7 @@ public class ShipWheel : MonoBehaviour
 
     bool isPlayerInRange = false;
     bool isPlayerDriving = false;
+    bool isShipAlive = true;
 
     private Transform playerRef; 
 
@@ -32,29 +33,36 @@ public class ShipWheel : MonoBehaviour
         isPlayerInRange = false;
         isPlayerDriving = false;
 
+
     }
 
     private void OnEnable()
     {
         PlayerInputManager.onInteract += onPlayerInteractWheel;
-        PlayerInputManager.onMove += HandleShipControls; 
+        PlayerInputManager.onMove += HandleShipControls;
+        Ship.onShipDeath += OnShipDeath; 
     }
 
     private void OnDisable()
     {
         PlayerInputManager.onInteract -= onPlayerInteractWheel;
         PlayerInputManager.onMove -= HandleShipControls;
+        Ship.onShipDeath -= OnShipDeath;
+
     }
     // Update is called once per frame
     void Update()
     {
-
-
+        if (isPlayerDriving && !isShipAlive)
+        {
+            isPlayerDriving = !isPlayerDriving;
+            onPlayerAtWheel?.Invoke(isPlayerDriving);
+        }
     }
 
     private void onPlayerInteractWheel()
     {
-        if (!isPlayerInRange)
+        if (!isPlayerInRange || !isShipAlive)
             return;
 
         Debug.Log("PLAYER DRIVING: " + isPlayerDriving);
@@ -62,6 +70,7 @@ public class ShipWheel : MonoBehaviour
 
         onPlayerAtWheel?.Invoke(isPlayerDriving);    
 
+        //Broken rnow 
         if (!playerRef)
             playerRef = fixedPosition;    
     }
@@ -136,7 +145,6 @@ public class ShipWheel : MonoBehaviour
         }
     }
 
-
     private void OnTriggerExit(Collider other)
     {
         if (other.gameObject.tag == "Player")
@@ -145,6 +153,11 @@ public class ShipWheel : MonoBehaviour
             playerRef = null;
 
         }
+    }
+
+    private void OnShipDeath()
+    {
+        isShipAlive = false;
     }
 
 

@@ -2,14 +2,20 @@ using UnityEngine;
 
 
 //Should make this a kinematic and handle the physics myself 
+
+//power of having their own class the managers can be unique lets go might be new strat
 public class SwordFishEnemy : Enemy
 {
     //Prob should have dynamic flight time 
+
+    [SerializeField] private string shipTargetPointName;
+
+    //not in use rnow 
+    [SerializeField] private float damage; 
+
+    [Header("Targetting and Movement")]
     [SerializeField] private float flightTime;
-
-
     [SerializeField] private float gravity;
-
 
 
     [SerializeField] private float maxFlightTime; 
@@ -22,7 +28,7 @@ public class SwordFishEnemy : Enemy
     [SerializeField] private float minTargetDistPercentage;
 
 
-    public GameObject endTarget;
+    private GameObject endTarget;
     private Vector3 currentTarget;
 
     private int numOfHops;
@@ -39,6 +45,12 @@ public class SwordFishEnemy : Enemy
         numOfHops = Random.Range(numOfHopsMin, numOfHopsMax + 1);
         currentNumHops = 0;
 
+        endTarget = GameObject.FindGameObjectWithTag(shipTargetPointName);
+        if (endTarget == null)
+        {
+            Debug.Log("INVALID TARGET POINT");
+            return;
+        }
         //temp 
         isActive = true;
         isAlive = true;
@@ -55,6 +67,15 @@ public class SwordFishEnemy : Enemy
 
         if (!isAlive)
             Destroy(gameObject);
+
+
+        Vector3 targetVector = (endTarget.transform.position - transform.position).normalized;
+        float yRotation = Quaternion.LookRotation(targetVector, Vector3.up).eulerAngles.y;
+
+
+        transform.rotation = Quaternion.Euler(transform.rotation.eulerAngles.x,
+                                                    yRotation,
+                                                    transform.rotation.eulerAngles.z);
     }
 
     //Idea is to choose a random point that is at least 40% the distance from 
@@ -79,7 +100,6 @@ public class SwordFishEnemy : Enemy
 
         currentNumHops++;
         Vector3 flyForce = CalculateForce(currentTarget);
-        //Debug.Log("CALCULATED FORCE: " + flyForce + "FLIGHT TIME: " + desiredFlightTime);
 
         //TEMP 
         GetComponent<Rigidbody>().AddForce(flyForce, ForceMode.Impulse);
@@ -113,6 +133,8 @@ public class SwordFishEnemy : Enemy
 
     private void OnTriggerEnter(Collider other)
     {
+
+        //This might not be the greatest bounce back method but oh well 
         if (other.gameObject.CompareTag("Water"))
         {
             //if (currentNumHops == numOfHops)
@@ -122,6 +144,21 @@ public class SwordFishEnemy : Enemy
             GetComponent<Rigidbody>().linearVelocity = Vector3.zero; 
             CalculateNextTargetPoint();
         }
+
+
+        //coudl prob make this a base class functoin or smth 
+        if (other.gameObject.CompareTag("Ship"))
+        {
+            Debug.Log("HIT SHIP");
+            Ship shipRef = other.gameObject.GetComponentInParent<Ship>();
+            if (shipRef != null)
+            {
+                shipRef.DealDamage(damage);
+                Destroy(gameObject);
+            }
+        }
+
     }
+
 
 }

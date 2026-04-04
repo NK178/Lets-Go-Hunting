@@ -1,5 +1,7 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 
 public enum GAMESTATE { 
@@ -9,21 +11,24 @@ public enum GAMESTATE {
 }
 
 
+//Observer Pattern??
+
 public class GameManager : MonoBehaviour
 {
 
     [SerializeField] private bool DEBUG_SkipMenu;
 
-    [SerializeField] private List<SectionManager> sectionsList; 
-
-
+    private List<SectionManager> sectionsInSceneList;
+    [SerializeField] private float loadSectionWaitTime; 
     [HideInInspector] public GAMESTATE currentGameState; 
 
 
     private int currentSection;
 
 
-    static public GameManager Instance;
+    private bool isSectionActive; 
+
+    static public GameManager Instance = null;
 
 
     private void Awake()
@@ -39,9 +44,28 @@ public class GameManager : MonoBehaviour
         }
 
 
+        isSectionActive = false;
         currentSection = 0;
+
+        sectionsInSceneList = new List<SectionManager>();
+
+
         if (DEBUG_SkipMenu)
-            UpdateGameState(GAMESTATE.STAGE_PHASE);
+        {
+            SceneManager.LoadScene("MainScene");
+        }
+
+            //UpdateGameState(GAMESTATE.STAGE_PHASE);
+    }
+
+    private void OnEnable()
+    {
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    private void OnDisable()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
     }
 
     // Update is called once per frame
@@ -54,7 +78,7 @@ public class GameManager : MonoBehaviour
     {
         if (newGameState == GAMESTATE.STAGE_PHASE)
         {
-            bool isCurrentSectionOver = sectionsList[currentSection].IsSectionOver();
+            bool isCurrentSectionOver = sectionsInSceneList[currentSection].IsSectionOver();
 
             if (isCurrentSectionOver)
             {
@@ -65,8 +89,145 @@ public class GameManager : MonoBehaviour
             {
                 currentGameState = GAMESTATE.STAGE_PHASE;
 
-                sectionsList[currentSection].InitSection();
+                sectionsInSceneList[currentSection].InitSection();
             }
+        }                             
+    }
+
+
+    public void RegisterSection(SectionManager section)
+    {
+        foreach (SectionManager sect in sectionsInSceneList)
+        {
+            if (section == sect)
+                return; 
+        }
+        sectionsInSceneList.Add(section);
+    }
+
+
+    //need to load sections in this way 
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (this != Instance) return;
+        Debug.Log("Entered Scene: " + scene.name);
+
+        if (scene.name != "MainMenu")
+        {
+            StartCoroutine(LoadSectionCoroutine());
         }
     }
+
+
+    private IEnumerator LoadSectionCoroutine()
+    {
+        yield return new WaitForSeconds(loadSectionWaitTime);
+
+        StartCoroutine(DEBUG_WaitToStartSection());
+
+        //SectionManager[] tempArray = new SectionManager[sectionsInSceneList.Count]; 
+        //for (int i = 0; i < sectionsInSceneList.Count; i++)
+        //{
+        //    tempArray[i] = sectionsInSceneList[i];  
+        //}
+        //MergeSort(tempArray, 0, tempArray.Length - 1);
+
+        //for (int i = 0; i < tempArray.Length; i++)
+        //{
+        //    Debug.Log("SECTION INDEX: " + tempArray[i].GetSectionIndex());  
+        //    sectionsInSceneList[i] = tempArray[i]; 
+        //}
+
+        //isSectionActive = true;
+        //UpdateGameState(GAMESTATE.STAGE_PHASE);
+    }
+
+
+    private IEnumerator DEBUG_WaitToStartSection()
+    {
+        yield return new WaitForSeconds(1f);
+        //order the sections 
+        SectionManager[] tempArray = new SectionManager[sectionsInSceneList.Count];
+        for (int i = 0; i < sectionsInSceneList.Count; i++)
+        {
+            tempArray[i] = sectionsInSceneList[i];
+        }
+        MergeSort(tempArray, 0, tempArray.Length - 1);
+        for (int i = 0; i < tempArray.Length; i++)
+        {
+            Debug.Log("SECTION INDEX: " + tempArray[i].GetSectionIndex());
+            sectionsInSceneList[i] = tempArray[i];
+        }
+
+        isSectionActive = true;
+        UpdateGameState(GAMESTATE.STAGE_PHASE);
+    }
+
+    private void MergeSort(SectionManager[] array, int left, int right)
+    {
+        if (left < right)
+        {
+            int mid = left + (right - left) / 2;
+
+            MergeSort(array, left, mid);
+            MergeSort(array, mid + 1, right);
+            Merge(array, left, mid, right);
+        }
+    }
+
+    private void Merge(SectionManager[] array, int left, int mid, int right)
+    {
+        int n1 = mid - left + 1;
+        int n2 = right - mid;
+
+        SectionManager[] list1 = new SectionManager[n1];
+        SectionManager[] list2 = new SectionManager[n2];
+        int i = 0;
+        int j = 0;
+
+        for (i = 0; i < n1; i++)
+        {
+            list1[i] = array[left + i]; 
+        }
+        for (j = 0; j < n2; j++)
+        {
+            list2[j] = array[mid + 1 + j];
+        }
+
+        int k = mid;
+        while (i < n1 && j < n2)
+        {
+            int lIndex = list1[i].GetSectionIndex(); 
+            int rIndex = list2[i].GetSectionIndex();
+
+            if (lIndex <= rIndex)
+            {
+                array[k] = list1[i];
+                i++;
+            }
+            else 
+            {
+                array[k] = list2[j];
+                j++; 
+            }
+            k++;
+        }
+
+        while (i < n1)
+        {
+            array[k] = list1[i];
+            i++;
+            k++;
+        }
+        while (j < n2)
+        {
+            array[k] = list2[j];
+            j++;
+            k++;
+        }
+    }
+
+
+
+
 }
