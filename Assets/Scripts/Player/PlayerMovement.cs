@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using static UnityEditor.U2D.ScriptablePacker;
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -20,9 +21,15 @@ public class PlayerMovement : MonoBehaviour
 
     private float yRotation;
 
-    private bool isPlayerDriving = false;
+    private bool freezeMovement = false;
+    private bool freezeRotation = false; 
 
-    public static Action<Vector3> onGunPlaceholderMove; 
+    //private bool isPlayerDriving = false;
+
+    public static Action<Vector3> onGunPlaceholderMove;
+
+
+    private Transform shipShootTransform; 
         
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -36,7 +43,10 @@ public class PlayerMovement : MonoBehaviour
         PlayerInputManager.onMove += CalculateHorizontalVelocity;
         PlayerInputManager.onJump += CalculateJumpVelocity;
 
-        ShipWheel.onPlayerAtWheel += HandlePlayerDriveShip;
+        ShipWheel.onPlayerAtWheel += ToggleMoveFreeze;
+        Ship.onShipIsCombatMode += ToggleMoveFreeze;
+        Ship.onShipIsCombatMode += ToggleRotateFreeze;
+        Ship.onShipLockTransform += ShipLockTransform; 
         CameraController.onFirstPersonCameraRotate += ReadCameraRotation; 
 
     }
@@ -46,7 +56,10 @@ public class PlayerMovement : MonoBehaviour
         PlayerInputManager.onMove -= CalculateHorizontalVelocity;
         PlayerInputManager.onJump -= CalculateJumpVelocity;
 
-        ShipWheel.onPlayerAtWheel -= HandlePlayerDriveShip;
+        ShipWheel.onPlayerAtWheel -= ToggleMoveFreeze;
+        Ship.onShipIsCombatMode -= ToggleMoveFreeze;
+        Ship.onShipIsCombatMode -= ToggleRotateFreeze;
+        Ship.onShipLockTransform -= ShipLockTransform;
         CameraController.onFirstPersonCameraRotate -= ReadCameraRotation;
     }
 
@@ -67,10 +80,14 @@ public class PlayerMovement : MonoBehaviour
         Vector3 finalVelocity = (horizontalVelocity + verticalVelocity) * Time.deltaTime;
         yRotation = CalculateCharacterRotation().eulerAngles.y;
 
-        transform.rotation = Quaternion.Euler(transform.rotation.eulerAngles.x, yRotation ,transform.rotation.eulerAngles.z);
+        //if (!freezeRotation)
+        //    transform.rotation = Quaternion.Euler(transform.rotation.eulerAngles.x, yRotation, transform.rotation.eulerAngles.z);
+        //else
+        //    transform.rotation = shipShootTransform.rotation; 
 
+        transform.rotation = Quaternion.Euler(transform.rotation.eulerAngles.x, yRotation, transform.rotation.eulerAngles.z);
 
-        if (!isPlayerDriving)
+        if (!freezeMovement)
             characterController.Move(finalVelocity);
     }
 
@@ -110,9 +127,27 @@ public class PlayerMovement : MonoBehaviour
     }
 
 
-    void HandlePlayerDriveShip(bool condition)
+    void ShipLockTransform(Transform transform)
     {
-        isPlayerDriving = condition; 
+        shipShootTransform = transform; 
     }
+
+
+    void ToggleMoveFreeze(bool condition)
+    {
+        freezeMovement = condition;
+    }
+
+    void ToggleRotateFreeze(bool condition)
+    {
+        freezeRotation = condition; 
+    }
+
+
+
+    //void HandlePlayerDriveShip(bool condition)
+    //{
+    //    isPlayerDriving = condition; 
+    //}
 
 }

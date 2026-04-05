@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using Unity.Cinemachine;
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 
 
@@ -24,51 +26,75 @@ public class CameraController : MonoBehaviour
     [SerializeField] private List<CameraCatagory> cameraList;
 
     private CameraCatagory activeCameraCat; 
-
-    //public static Action<float> onFirstPersonCameraRotate;
     public static Action<Vector3, Vector3> onFirstPersonCameraRotate;
+    public static Action<Vector2> onMouseMoved; 
+
+    private bool cameraLockRotate = false;
+
+    private Transform shipShootPointTransform; 
 
     void Awake()
     {
 
         ChangeCamera(CAMERATYPE.FIRST_PERSON);
         LockCursor(true);
-
     }
 
 
     private void OnEnable()
     {
         ShipWheel.onPlayerAtWheel += ChangeToShipCamera;
+        Ship.onShipIsCombatMode += ToggleLockCameraRotate;
+
+        Ship.onShipLockTransform += TrackShipRotate;
+
     }
 
     private void OnDisable()
     {
         ShipWheel.onPlayerAtWheel -= ChangeToShipCamera;
+        Ship.onShipIsCombatMode -= ToggleLockCameraRotate;
+        Ship.onShipLockTransform -= TrackShipRotate;
+
     }
 
     // Update is called once per frame
     void Update()
     {
         if (activeCameraCat == null)
-            return; 
+            return;
 
+        HandleMouse();
 
         if (activeCameraCat.type == CAMERATYPE.FIRST_PERSON)
             HandleFirstPersonCamera();
+
+        if (cameraLockRotate)
+        {
+            activeCameraCat.camera.gameObject.transform.rotation = shipShootPointTransform.rotation;
+        }
     }
 
     void HandleFirstPersonCamera()
     {
-        //float yRotateAngle = activeCameraCat.camera.transform.rotation.eulerAngles.y;
-
-        //onFirstPersonCameraRotate.Invoke(yRotateAngle);
-
-
         Vector3 cameraForward = activeCameraCat.camera.transform.forward;
         Vector3 cameraRight = activeCameraCat.camera.transform.right;
         onFirstPersonCameraRotate.Invoke(cameraForward, cameraRight);
+    }
 
+    void HandleMouse()
+    {
+        if (cameraLockRotate)
+        {
+            Vector2 mousePos = Mouse.current.position.ReadValue();
+            onMouseMoved?.Invoke(mousePos);
+        }
+
+    }
+
+    void TrackShipRotate(Transform transform)
+    {
+        shipShootPointTransform = transform;    
     }
 
     void ChangeToShipCamera(bool condition)
@@ -83,6 +109,23 @@ public class CameraController : MonoBehaviour
         }
     }
 
+    void ToggleLockCameraRotate(bool condition)
+    {
+        cameraLockRotate = condition;
+
+        if (condition)
+        {
+            if (activeCameraCat.type == CAMERATYPE.FIRST_PERSON)
+            {
+                var comp = activeCameraCat.camera.GetComponent<CinemachinePanTilt>();
+                if (comp != null)
+                {
+                    LockCursor(false);
+                    comp.enabled = false;
+                }
+            }
+        }
+    }
 
     void ChangeCamera(CAMERATYPE type)
     {
@@ -108,7 +151,7 @@ public class CameraController : MonoBehaviour
         else
         {
             Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
+            Cursor.visible = false;
         }
 
     }

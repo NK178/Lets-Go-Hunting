@@ -41,6 +41,7 @@ public class ShipWheel : MonoBehaviour
         PlayerInputManager.onInteract += onPlayerInteractWheel;
         PlayerInputManager.onMove += HandleShipControls;
         Ship.onShipDeath += OnShipDeath; 
+        
     }
 
     private void OnDisable()

@@ -1,5 +1,14 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
+
+
+[System.Serializable]
+public class PhaseToPosition
+{
+    public GAMESIGNAL signal;
+    public bool isLeft; 
+}
 
 public class Ship : MonoBehaviour
 {
@@ -13,7 +22,14 @@ public class Ship : MonoBehaviour
     [SerializeField] private GameObject shipRudder; 
     [SerializeField] private GameObject shipPropeller;
 
-    [SerializeField] private float shipMaxHealth; 
+
+    //CONSIDER SPLITTING TO ANOTHER CLASS 
+    [Header("Ship Combat")]
+    [SerializeField] private GameObject starboardShootPoint; 
+    [SerializeField] private GameObject portShootPoint; 
+    [SerializeField] private float shipMaxHealth;
+
+    [SerializeField] private List<PhaseToPosition> phaseToShootPositions;
 
     [Header("Ship Controls")]
     [SerializeField] private float moveSpeed;
@@ -26,7 +42,9 @@ public class Ship : MonoBehaviour
     [SerializeField] private float maxPropellerRotateSpeed;
 
     public static Action onShipDeath;
-    public static Action<float, float> onShipHealthChanged; 
+    public static Action<float, float> onShipHealthChanged;
+    public static Action<bool> onShipIsCombatMode;
+    public static Action<Transform> onShipLockTransform; 
 
 
     private float propellerPower;
@@ -42,6 +60,12 @@ public class Ship : MonoBehaviour
     private bool isPlayerOnShip;
 
     private bool isShipAlive;
+
+
+    //CONSIDER MOVING TO ANOTHER CLASS
+
+    private bool isInCombatMode = false;
+
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -128,8 +152,6 @@ public class Ship : MonoBehaviour
         shipRudder.transform.rotation = Quaternion.Euler(shipRudder.transform.eulerAngles.x,
                                                          angle,
                                                          shipRudder.transform.eulerAngles.z);
-
-
     }
 
     private void OnTriggerEnter(Collider other)
@@ -164,5 +186,43 @@ public class Ship : MonoBehaviour
         onShipHealthChanged?.Invoke(shipHealth, healthPercentage);
 
         Debug.Log("SHIP HP: " + shipHealth);
+    }
+
+
+    //Consider spiltting  to another class this thingy 
+    public void EnterShipCombatMode(GAMESIGNAL gamePhase)
+    {
+        Debug.Log("SHIP COMBAT MODE " + gamePhase);
+        bool isLeft = false;
+        
+        foreach (PhaseToPosition phasePos in phaseToShootPositions)
+        {
+            if (phasePos.signal == gamePhase)
+            {
+                isLeft = phasePos.isLeft;
+                break;
+            }
+        }
+
+
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player == null)
+            return; 
+
+        GameObject targetPos = starboardShootPoint;
+        if (isLeft)
+        {
+            targetPos = portShootPoint;
+        }
+
+        player.transform.position = targetPos.gameObject.transform.position;
+
+        player.transform.rotation = Quaternion.LookRotation(targetPos.gameObject.transform.right, targetPos.gameObject.transform.up);
+        isInCombatMode = true;
+
+        onShipLockTransform?.Invoke(targetPos.transform);
+        onShipIsCombatMode?.Invoke(true);
+
+
     }
 }

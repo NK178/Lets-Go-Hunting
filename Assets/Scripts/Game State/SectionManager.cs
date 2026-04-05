@@ -57,10 +57,12 @@ public class SectionManager : MonoBehaviour
         //currentWaveIndex++;
     }
 
-
-    private void SwitchToNextWave()
+    public void SwitchToNextWave()
     {
         StopAllCoroutines();
+        if (currentWaveIndex >= waveDataList.Count)
+            return; 
+
         currentWaveFunction = waveDataList[currentWaveIndex];
 
         currentWaveFunction.Excute(this);

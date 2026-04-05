@@ -4,11 +4,18 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 
+//based on current state player is in 
 public enum GAMESTATE { 
     MENU, 
     STAGE_PHASE,
     ENDGAME
 }
+
+////for gameplay 
+//public enum GAMEPHASE { 
+//    SECTION_1_SWORDFISH,
+//    NUM_PHASES
+//}
 
 
 //Observer Pattern??
