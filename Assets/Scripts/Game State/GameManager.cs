@@ -113,6 +113,14 @@ public class GameManager : MonoBehaviour
     }
 
 
+    public SectionManager GetCurrentSectionManager()
+    {
+        if (currentSection >= sectionsInSceneList.Count)
+            return null;
+        else
+            return sectionsInSceneList[currentSection];
+    }
+
     //need to load sections in this way 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {

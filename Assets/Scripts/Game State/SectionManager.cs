@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 
 //idk if this will work 
@@ -11,13 +12,19 @@ public class SectionManager : MonoBehaviour
     [SerializeField] private List<BaseWaveFunction> waveDataList;
 
 
+    [SerializeField] private bool enableDebugText = false;
+
+
     private BaseWaveFunction currentWaveFunction;
 
     private int currentWaveIndex; 
 
     private bool isSectionOver = false;
-    private bool isSectionActive = false; 
+    private bool isSectionActive = false;
 
+
+
+    //public GAMESIGNAL lastRecievedGameSignal; 
 
     void Awake()
     {
@@ -70,6 +77,47 @@ public class SectionManager : MonoBehaviour
         currentWaveIndex++;
     }
 
+
+    public void StartNextWave()
+    {
+        if (enableDebugText)
+            Debug.Log("START NEW WAVE");
+        currentWaveFunction = waveDataList[currentWaveIndex];
+        currentWaveFunction.Excute(this);
+    }
+
+    public void EndWave()
+    {
+
+        if (enableDebugText)
+            Debug.Log("END WAVE");
+
+        StopAllCoroutines();
+        currentWaveIndex++;
+        //to end this part 
+        if (currentWaveIndex >= waveDataList.Count)
+            isSectionOver = true; 
+    }
+
+
+    public void ReadGameSignal(GAMESIGNAL gameSignal)
+    {
+        if (enableDebugText)
+            Debug.Log("SectionManager reading signal: " + gameSignal);
+
+        //lastRecievedGameSignal = gameSignal;
+        string signal = gameSignal.ToString();
+
+        if (signal.Contains("START"))
+        {
+            StartNextWave();
+        }
+        else if (signal.Contains("END"))
+        {
+            EndWave();
+        }
+    }
+
     public bool IsSectionOver()
     {
         return isSectionOver;
@@ -79,4 +127,7 @@ public class SectionManager : MonoBehaviour
     {
         return sectionIndex;
     }
+
+
+
 }

@@ -3,7 +3,8 @@ using UnityEngine;
 
 public class ShipWheel : MonoBehaviour
 {
-    [SerializeField] private Transform fixedPosition;
+    [SerializeField] private Transform playerFixedLocation;
+
 
     [SerializeField] private float propellerAcceleration;
     [SerializeField] private float maxAheadPropellerSpeed;
@@ -17,21 +18,25 @@ public class ShipWheel : MonoBehaviour
     private float currentRudderAngle; 
 
     bool isPlayerInRange = false;
-    bool isPlayerDriving = false;
+    //bool isPlayerDriving = false;
     bool isShipAlive = true;
 
     private Transform playerRef; 
 
-    public static Action<bool> onPlayerAtWheel;
+    //public static Action<bool> onPlayerAtWheel;
 
+
+    public Action<SHIPMODE> onChangeShipMode;
     public Action<float> onPropellerActive; 
-    public Action<float> onRudderActive; 
+    public Action<float> onRudderActive;
+
+    private SHIPMODE referenceShipMode; 
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         isPlayerInRange = false;
-        isPlayerDriving = false;
+        //isPlayerDriving = false;
 
 
     }
@@ -40,25 +45,40 @@ public class ShipWheel : MonoBehaviour
     {
         PlayerInputManager.onInteract += onPlayerInteractWheel;
         PlayerInputManager.onMove += HandleShipControls;
-        Ship.onShipDeath += OnShipDeath; 
-        
+        Ship.onShipDeath += OnShipDeath;
+        Ship.onShipChangedMode += SetShipMode;
+
+        //Ship.onShipIsCombatMode += HandleShipInCombat;
+
     }
 
     private void OnDisable()
     {
         PlayerInputManager.onInteract -= onPlayerInteractWheel;
-        PlayerInputManager.onMove -= HandleShipControls;
+        PlayerInputManager.onMove -= HandleShipControls; 
         Ship.onShipDeath -= OnShipDeath;
-
+        Ship.onShipChangedMode -= SetShipMode; 
+        //Ship.onShipIsCombatMode -= HandleShipInCombat;
     }
+
+
+
+
     // Update is called once per frame
     void Update()
     {
-        if (isPlayerDriving && !isShipAlive)
-        {
-            isPlayerDriving = !isPlayerDriving;
-            onPlayerAtWheel?.Invoke(isPlayerDriving);
-        }
+        //if (isPlayerDriving && !isShipAlive)
+        //{
+        //    isPlayerDriving = !isPlayerDriving;
+        //    onPlayerAtWheel?.Invoke(isPlayerDriving);
+        //}
+    }
+
+
+
+    private void SetShipMode(SHIPMODE shipMode)
+    {
+        referenceShipMode = shipMode;
     }
 
     private void onPlayerInteractWheel()
@@ -66,21 +86,46 @@ public class ShipWheel : MonoBehaviour
         if (!isPlayerInRange || !isShipAlive)
             return;
 
-        Debug.Log("PLAYER DRIVING: " + isPlayerDriving);
-        isPlayerDriving = !isPlayerDriving;
+        //isPlayerDriving = !isPlayerDriving;
 
-        onPlayerAtWheel?.Invoke(isPlayerDriving);    
+        //SHIPMODE newMode = SHIPMODE.MANUAL_DRIVE;
+        //if (!isPlayerDriving)
+        //    newMode = SHIPMODE.IDLE;
 
-        //Broken rnow 
-        if (!playerRef)
-            playerRef = fixedPosition;    
+        if (referenceShipMode == SHIPMODE.IDLE)
+            onChangeShipMode?.Invoke(SHIPMODE.MANUAL_DRIVE);
+        else if (referenceShipMode == SHIPMODE.MANUAL_DRIVE)
+            onChangeShipMode?.Invoke(SHIPMODE.IDLE);
+
+
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player != null)
+        {
+
+            player.transform.position = playerFixedLocation.position;
+            player.transform.rotation = playerFixedLocation.rotation;
+
+            //player.transform.position = gameObject.transform.position;
+            //player.transform.rotation = gameObject.transform.rotation;
+        }
     }
+
+
+    //private void HandleShipInCombat(bool condition)
+    //{
+    //    if (condition && isPlayerDriving)
+    //    {
+    //        onPlayerInteractWheel();
+    //    }
+    //}
 
     private void HandleShipControls(Vector2 direction)
     {
+        //if (!isPlayerDriving)
+        //    return; 
 
-        if (!isPlayerDriving)
-            return; 
+        if (referenceShipMode != SHIPMODE.MANUAL_DRIVE)
+            return;     
 
         //for moving forward and back 
 

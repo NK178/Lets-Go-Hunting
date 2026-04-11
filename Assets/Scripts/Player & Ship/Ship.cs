@@ -3,12 +3,15 @@ using System.Collections.Generic;
 using UnityEngine;
 
 
-[System.Serializable]
-public class PhaseToPosition
+public enum SHIPMODE
 {
-    public GAMESIGNAL signal;
-    public bool isLeft; 
+    IDLE,
+    COMBAT, 
+    MANUAL_DRIVE,
+    AUTO_DRIVE,
+    NUM_MODES
 }
+
 
 public class Ship : MonoBehaviour
 {
@@ -21,6 +24,8 @@ public class Ship : MonoBehaviour
     [SerializeField] private ShipWheel shipWheel;
     [SerializeField] private GameObject shipRudder; 
     [SerializeField] private GameObject shipPropeller;
+
+    [SerializeField] private ShipCombat shipCombat;
 
 
     //CONSIDER SPLITTING TO ANOTHER CLASS 
@@ -44,8 +49,7 @@ public class Ship : MonoBehaviour
     public static Action onShipDeath;
     public static Action<float, float> onShipHealthChanged;
     public static Action<bool> onShipIsCombatMode;
-    public static Action<Transform> onShipLockTransform; 
-
+    public static Action<SHIPMODE> onShipChangedMode; 
 
     private float propellerPower;
     private float rudderAngle;
@@ -60,6 +64,10 @@ public class Ship : MonoBehaviour
     private bool isPlayerOnShip;
 
     private bool isShipAlive;
+
+    private SHIPMODE currentMode; 
+
+    
 
 
     //CONSIDER MOVING TO ANOTHER CLASS
@@ -90,19 +98,22 @@ public class Ship : MonoBehaviour
             player.transform.rotation = shipWheel.gameObject.transform.rotation;
 
         }
+
+        SwitchShipMode(SHIPMODE.IDLE);
     }
 
     private void OnEnable()
     {
         shipWheel.onPropellerActive += ReadPropeller;
         shipWheel.onRudderActive += ReadRudder;
+        shipWheel.onChangeShipMode += SwitchShipMode;
     }
 
     private void OnDisable()
     {
         shipWheel.onPropellerActive -= ReadPropeller;
         shipWheel.onRudderActive -= ReadRudder;
-
+        shipWheel.onChangeShipMode -= SwitchShipMode;
     }
 
 
@@ -129,7 +140,6 @@ public class Ship : MonoBehaviour
         transform.Rotate(0, rudderForce * Time.deltaTime, 0);
     }
 
-
     void ReadPropeller(float power)
     {
         propellerPower = power;
@@ -137,7 +147,6 @@ public class Ship : MonoBehaviour
 
         //shipPropeller.transform.rotation
     }
-
 
     void ReadRudder(float angle)
     {
@@ -154,24 +163,18 @@ public class Ship : MonoBehaviour
                                                          shipRudder.transform.eulerAngles.z);
     }
 
-    private void OnTriggerEnter(Collider other)
+
+    private void SwitchShipMode(SHIPMODE newMode)
     {
-        if (other.gameObject.tag == "Player")
-        {
-            isPlayerOnShip = true;
-            other.gameObject.transform.parent = this.transform;
-        }
+        if (newMode == currentMode)
+            return;
+
+        currentMode = newMode;
+
+        onShipChangedMode?.Invoke(newMode);
     }
 
 
-    private void OnTriggerExit(Collider other)
-    {
-        if (other.gameObject.tag == "Player")
-        {
-            isPlayerOnShip = false;
-            other.gameObject.transform.parent = null;
-        }
-    }
 
     public void DealDamage(float damage)
     {
@@ -188,41 +191,111 @@ public class Ship : MonoBehaviour
         Debug.Log("SHIP HP: " + shipHealth);
     }
 
-
-    //Consider spiltting  to another class this thingy 
-    public void EnterShipCombatMode(GAMESIGNAL gamePhase)
+    public void GameSignalResponse(GAMESIGNAL gameSignal)
     {
-        Debug.Log("SHIP COMBAT MODE " + gamePhase);
-        bool isLeft = false;
-        
-        foreach (PhaseToPosition phasePos in phaseToShootPositions)
+        Debug.Log("SHIP COMBAT " + gameSignal);
+
+        string signal = gameSignal.ToString();
+       
+        if (signal.Contains("START"))
         {
-            if (phasePos.signal == gamePhase)
+            SwitchShipMode(SHIPMODE.COMBAT);
+        }
+        else if (signal.Contains("END"))
+        {
+            SHIPMODE newMode = SHIPMODE.IDLE; 
+
+            if (newMode == SHIPMODE.IDLE)
             {
-                isLeft = phasePos.isLeft;
-                break;
+                SwitchShipMode(SHIPMODE.IDLE);
+
+
+                ////Hmm slight issue but eh will fix 
+                //GameObject player = GameObject.FindGameObjectWithTag("Player");
+                //if (player != null)
+                //{
+                //    player.transform.position = shipWheel.gameObject.transform.position;
+                //    player.transform.rotation = shipWheel.gameObject.transform.rotation;
+                //}
+
+
             }
+            else if (newMode == SHIPMODE.MANUAL_DRIVE)
+            {
+                
+                SwitchShipMode(SHIPMODE.MANUAL_DRIVE);
+
+            }
+
+
+            ////default to drive for now 
+            //SwitchShipMode(SHIPMODE.DRIVE);
         }
-
-
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        if (player == null)
-            return; 
-
-        GameObject targetPos = starboardShootPoint;
-        if (isLeft)
-        {
-            targetPos = portShootPoint;
-        }
-
-        player.transform.position = targetPos.gameObject.transform.position;
-
-        player.transform.rotation = Quaternion.LookRotation(targetPos.gameObject.transform.right, targetPos.gameObject.transform.up);
-        isInCombatMode = true;
-
-        onShipLockTransform?.Invoke(targetPos.transform);
-        onShipIsCombatMode?.Invoke(true);
-
 
     }
+        
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.gameObject.tag == "Player")
+        {
+            isPlayerOnShip = true;
+            other.gameObject.transform.parent = this.transform;
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.gameObject.tag == "Player")
+        {
+            isPlayerOnShip = false;
+            other.gameObject.transform.parent = null;
+        }
+    }
+
+
+    ////Consider spiltting  to another class this thingy 
+    //public void EnterShipCombatMode(GAMESIGNAL gamePhase)
+    //{
+    //    Debug.Log("SHIP COMBAT MODE " + gamePhase);
+    //    bool isLeft = false;
+
+    //    foreach (PhaseToPosition phasePos in phaseToShootPositions)
+    //    {
+    //        if (phasePos.signal == gamePhase)
+    //        {
+    //            isLeft = phasePos.isLeft;
+    //            break;
+    //        }
+    //    }
+
+
+    //    GameObject player = GameObject.FindGameObjectWithTag("Player");
+    //    if (player == null)
+    //        return; 
+
+    //    GameObject targetPos = starboardShootPoint;
+    //    if (isLeft)
+    //    {
+    //        targetPos = portShootPoint;
+    //    }
+
+    //    player.transform.position = targetPos.gameObject.transform.position;
+
+    //    player.transform.rotation = Quaternion.LookRotation(targetPos.gameObject.transform.right, targetPos.gameObject.transform.up);
+    //    isInCombatMode = true;
+
+    //    onShipLockTransform?.Invoke(targetPos.transform);
+    //    onShipIsCombatMode?.Invoke(true);
+    //}
+
+    //public void ExitShipCombatMode()
+    //{
+    //    Debug.Log("SHIP EXITING COMBAT MODE TIME TO DRIVE BOI");
+
+    //    isInCombatMode = false;
+
+    //    //onShipLockTransform?.Invoke(targetPos.transform);
+    //    onShipIsCombatMode?.Invoke(false);
+    //}
 }

@@ -1,30 +1,6 @@
 using System;
 using UnityEngine;
 
-//[CreateAssetMenu(fileName = "GameSignal", menuName = "Scriptable Objects/GameSignal")]
-//public class GameSignal : ScriptableObject
-//{
-
-//    [SerializeField] private GAMEPHASE gamePhase;
-//    private event Action<GAMEPHASE> OnSignalRaised; 
-
-//    public void Raise()
-//    {
-//        //Debug.Log("INVOKED SIGNAL");
-//        OnSignalRaised?.Invoke(gamePhase); 
-//    }
-
-//    public void RegisterListener(Action<GAMEPHASE> listener)
-//    {
-//        OnSignalRaised += listener; 
-//    }
-
-//    public void UnregisterListener(Action<GAMEPHASE> listener)
-//    {
-//        OnSignalRaised -= listener; 
-//    }
-//}
-
 [CreateAssetMenu(fileName = "GameSignal", menuName = "Scriptable Objects/GameSignal")]
 public class GameSignal : ScriptableObject
 {
@@ -50,6 +26,8 @@ public class GameSignal : ScriptableObject
 }
 
 
+//USING THE START AND END FOR SUBSTRINGS KIDNA IMPORTANT
+//can consider changing the substring to STARTPHASE and ENDPHASE in the future i guess
 public enum GAMESIGNAL { 
     START_SECTION_1_SWORDFISH,
     END_SECTION_1_SWORDFISH,

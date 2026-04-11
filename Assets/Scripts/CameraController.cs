@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using Unity.Cinemachine;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -43,19 +42,43 @@ public class CameraController : MonoBehaviour
 
     private void OnEnable()
     {
-        ShipWheel.onPlayerAtWheel += ChangeToShipCamera;
-        Ship.onShipIsCombatMode += ToggleLockCameraRotate;
+        //ShipWheel.onPlayerAtWheel += ChangeToShipCamera;
+        Ship.onShipIsCombatMode += ToggleFreezeRotation;
 
-        Ship.onShipLockTransform += TrackShipRotate;
+        ShipCombat.onShipLockTransform += TrackShipRotate;
+
+        Ship.onShipChangedMode += HandleCameraShipMode; 
 
     }
 
     private void OnDisable()
     {
-        ShipWheel.onPlayerAtWheel -= ChangeToShipCamera;
-        Ship.onShipIsCombatMode -= ToggleLockCameraRotate;
-        Ship.onShipLockTransform -= TrackShipRotate;
+        //ShipWheel.onPlayerAtWheel -= ChangeToShipCamera;
+        Ship.onShipIsCombatMode -= ToggleFreezeRotation;
+        ShipCombat.onShipLockTransform -= TrackShipRotate;
 
+        Ship.onShipChangedMode -= HandleCameraShipMode;
+
+    }
+
+    private void HandleCameraShipMode(SHIPMODE shipMode)
+    {
+        switch (shipMode)
+        {
+
+            case SHIPMODE.IDLE:
+                ToggleFreezeRotation(false);
+                ChangeCamera(CAMERATYPE.FIRST_PERSON);
+                break;
+            case SHIPMODE.MANUAL_DRIVE:
+                ToggleFreezeRotation(false);
+                ChangeCamera(CAMERATYPE.SHIP_CAMERA);
+                break;
+            case SHIPMODE.COMBAT:
+                ChangeCamera(CAMERATYPE.FIRST_PERSON);
+                ToggleFreezeRotation(true);
+                break;
+        }
     }
 
     // Update is called once per frame
@@ -69,6 +92,7 @@ public class CameraController : MonoBehaviour
         if (activeCameraCat.type == CAMERATYPE.FIRST_PERSON)
             HandleFirstPersonCamera();
 
+        //bad method but will do for now 
         if (cameraLockRotate)
         {
             activeCameraCat.camera.gameObject.transform.rotation = shipShootPointTransform.rotation;
@@ -109,7 +133,7 @@ public class CameraController : MonoBehaviour
         }
     }
 
-    void ToggleLockCameraRotate(bool condition)
+    void ToggleFreezeRotation(bool condition)
     {
         cameraLockRotate = condition;
 
@@ -122,6 +146,18 @@ public class CameraController : MonoBehaviour
                 {
                     LockCursor(false);
                     comp.enabled = false;
+                }
+            }
+        }
+        else if (!condition)
+        {
+            if (activeCameraCat.type == CAMERATYPE.FIRST_PERSON)
+            {
+                var comp = activeCameraCat.camera.GetComponent<CinemachinePanTilt>();
+                if (comp != null)
+                {
+                    LockCursor(true);
+                    comp.enabled = true;
                 }
             }
         }

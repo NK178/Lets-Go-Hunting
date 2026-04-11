@@ -1,12 +1,9 @@
 using System;
 using UnityEngine;
-using static UnityEditor.U2D.ScriptablePacker;
 
 public class PlayerMovement : MonoBehaviour
 {
-
     //[SerializeField] private PlayerInputManager inputManager;
-
 
     [SerializeField] private CharacterController characterController;
     [SerializeField] private Transform gunPlaceholder; 
@@ -29,7 +26,7 @@ public class PlayerMovement : MonoBehaviour
     public static Action<Vector3> onGunPlaceholderMove;
 
 
-    private Transform shipShootTransform; 
+    //private Transform shipShootTransform; 
         
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -43,10 +40,12 @@ public class PlayerMovement : MonoBehaviour
         PlayerInputManager.onMove += CalculateHorizontalVelocity;
         PlayerInputManager.onJump += CalculateJumpVelocity;
 
-        ShipWheel.onPlayerAtWheel += ToggleMoveFreeze;
+        //ShipWheel.onPlayerAtWheel += ToggleMoveFreeze;
+
+        Ship.onShipChangedMode += HandlePlayerShipMode;
         Ship.onShipIsCombatMode += ToggleMoveFreeze;
         Ship.onShipIsCombatMode += ToggleRotateFreeze;
-        Ship.onShipLockTransform += ShipLockTransform; 
+        //ShipCombat.onShipLockTransform += ShipLockTransform; 
         CameraController.onFirstPersonCameraRotate += ReadCameraRotation; 
 
     }
@@ -56,12 +55,16 @@ public class PlayerMovement : MonoBehaviour
         PlayerInputManager.onMove -= CalculateHorizontalVelocity;
         PlayerInputManager.onJump -= CalculateJumpVelocity;
 
-        ShipWheel.onPlayerAtWheel -= ToggleMoveFreeze;
+        //ShipWheel.onPlayerAtWheel -= ToggleMoveFreeze;
+
+        Ship.onShipChangedMode -= HandlePlayerShipMode;
         Ship.onShipIsCombatMode -= ToggleMoveFreeze;
         Ship.onShipIsCombatMode -= ToggleRotateFreeze;
-        Ship.onShipLockTransform -= ShipLockTransform;
+        //ShipCombat.onShipLockTransform -= ShipLockTransform;
         CameraController.onFirstPersonCameraRotate -= ReadCameraRotation;
     }
+
+
 
     // Update is called once per frame
     void Update()
@@ -89,6 +92,27 @@ public class PlayerMovement : MonoBehaviour
 
         if (!freezeMovement)
             characterController.Move(finalVelocity);
+    }
+
+
+    private void HandlePlayerShipMode(SHIPMODE shipMode)
+    {
+        switch (shipMode)
+        {
+            case SHIPMODE.IDLE:
+                ToggleMoveFreeze(false);
+                ToggleRotateFreeze(false);
+                break;
+            case SHIPMODE.MANUAL_DRIVE:
+                ToggleMoveFreeze(true);
+                ToggleRotateFreeze(false);
+                break;
+            case SHIPMODE.COMBAT:
+                ToggleMoveFreeze(true);
+                ToggleRotateFreeze(true);
+                break;
+
+        }
     }
 
     Quaternion CalculateCharacterRotation()
@@ -127,10 +151,10 @@ public class PlayerMovement : MonoBehaviour
     }
 
 
-    void ShipLockTransform(Transform transform)
-    {
-        shipShootTransform = transform; 
-    }
+    //void ShipLockTransform(Transform transform)
+    //{
+    //    shipShootTransform = transform; 
+    //}
 
 
     void ToggleMoveFreeze(bool condition)

@@ -28,17 +28,42 @@ public class UIManager : MonoBehaviour
     private void OnEnable()
     {
         Ship.onShipHealthChanged += UpdateShipHealthUI;
-        Ship.onShipIsCombatMode += ToggleUICombatMode; 
+        //Ship.onShipIsCombatMode += ToggleUICombatMode; 
         CameraController.onMouseMoved += UpdateCrosshairPosition;
+
+        Ship.onShipChangedMode += HandleUIShipMode; 
+
     }
 
     private void OnDisable()
     {
         Ship.onShipHealthChanged -= UpdateShipHealthUI;
-        Ship.onShipIsCombatMode -= ToggleUICombatMode;
+        //Ship.onShipIsCombatMode -= ToggleUICombatMode;
         CameraController.onMouseMoved -= UpdateCrosshairPosition;
+
+        Ship.onShipChangedMode -= HandleUIShipMode;
     }
 
+
+
+    private void HandleUIShipMode(SHIPMODE shipMode)
+    {
+        switch (shipMode)
+        {
+
+            case SHIPMODE.IDLE:
+                crosshair.GetComponent<RectTransform>().position = originalCrosshairPosition;
+                crosshair.gameObject.SetActive(true);
+                break;
+            case SHIPMODE.MANUAL_DRIVE:
+                crosshair.GetComponent<RectTransform>().position = originalCrosshairPosition;
+                crosshair.gameObject.SetActive(false);
+                break;
+            case SHIPMODE.COMBAT:
+                crosshair.gameObject.SetActive(true);
+                break;
+        }
+    }
 
 
     private void UpdateShipHealthUI(float health, float healthPercentage)
@@ -55,13 +80,13 @@ public class UIManager : MonoBehaviour
 
     }
 
-    private void ToggleUICombatMode(bool condition)
-    {
-        if (!condition)
-        {
-            crosshair.GetComponent<RectTransform>().position = originalCrosshairPosition;
-        }
-    }
+    //private void ToggleUICombatMode(bool condition)
+    //{
+    //    if (!condition)
+    //    {
+    //        crosshair.GetComponent<RectTransform>().position = originalCrosshairPosition;
+    //    }
+    //}
 
     private void UpdateCrosshairPosition(Vector2 position)
     {
