@@ -1,14 +1,19 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.Runtime.InteropServices;
+using Unity.Cinemachine;
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
+using UnityEngine.UIElements;
 
 
 public enum SHIPMODE
 {
     IDLE,
     COMBAT, 
-    MANUAL_DRIVE,
-    AUTO_DRIVE,
+    MANUAL_DRIVE, //change back to normal drive 
     NUM_MODES
 }
 
@@ -27,14 +32,11 @@ public class Ship : MonoBehaviour
 
     [SerializeField] private ShipCombat shipCombat;
 
-
-    //CONSIDER SPLITTING TO ANOTHER CLASS 
-    [Header("Ship Combat")]
-    [SerializeField] private GameObject starboardShootPoint; 
-    [SerializeField] private GameObject portShootPoint; 
     [SerializeField] private float shipMaxHealth;
 
-    [SerializeField] private List<PhaseToPosition> phaseToShootPositions;
+
+    //CONSIDER SPLITTING TO ANOTHER CLASS
+    [Header("Ship AUTO DRIVE CONTROLS")]
 
     [Header("Ship Controls")]
     [SerializeField] private float moveSpeed;
@@ -53,6 +55,7 @@ public class Ship : MonoBehaviour
 
     private float propellerPower;
     private float rudderAngle;
+    private float angularPower;
     private float rudderForce;
     private float shipHealth;
 
@@ -60,19 +63,15 @@ public class Ship : MonoBehaviour
     private Vector3 movementVector; 
     private Vector3 rotationVector; 
 
-    private float angularPower; 
     private bool isPlayerOnShip;
 
     private bool isShipAlive;
 
+    private bool onAutoDrive = false;
+
+    private DriveCheckpoint targetCheckpoint = null; 
+
     private SHIPMODE currentMode; 
-
-    
-
-
-    //CONSIDER MOVING TO ANOTHER CLASS
-
-    private bool isInCombatMode = false;
 
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -100,6 +99,9 @@ public class Ship : MonoBehaviour
         }
 
         SwitchShipMode(SHIPMODE.IDLE);
+
+
+        movementVector = transform.forward;
     }
 
     private void OnEnable()
@@ -107,6 +109,8 @@ public class Ship : MonoBehaviour
         shipWheel.onPropellerActive += ReadPropeller;
         shipWheel.onRudderActive += ReadRudder;
         shipWheel.onChangeShipMode += SwitchShipMode;
+
+        DriveTrack.onCheckpointSet += HandleCheckPoint;
     }
 
     private void OnDisable()
@@ -114,6 +118,9 @@ public class Ship : MonoBehaviour
         shipWheel.onPropellerActive -= ReadPropeller;
         shipWheel.onRudderActive -= ReadRudder;
         shipWheel.onChangeShipMode -= SwitchShipMode;
+
+        DriveTrack.onCheckpointSet -= HandleCheckPoint;
+
     }
 
 
@@ -123,22 +130,96 @@ public class Ship : MonoBehaviour
     private void FixedUpdate()
     {
         if (!isShipAlive)
-            return; 
+            return;
 
-        currentVelocity = transform.forward * propellerPower;
-        //movementVector = transform.forward * propellerPower;
+        if (currentMode == SHIPMODE.MANUAL_DRIVE)
+            HandlePlayerDriveShip();
+        else if (currentMode == SHIPMODE.COMBAT)
+            HandleAutoDrive();
+
+ 
+        if (currentMode == SHIPMODE.IDLE || currentMode == SHIPMODE.MANUAL_DRIVE) {
+            propellerPower += -Math.Sign(propellerPower) * shipWheel.GetPropellerSpeedDecay() * Time.deltaTime;
+            rudderAngle += -Math.Sign(rudderAngle) * shipWheel.GetRudderAngleDecay() * Time.deltaTime;
+        }
 
 
-        angularPower = Mathf.Lerp(angularPower, rudderForce, angularDamping * Time.deltaTime);
-        angularPower = Mathf.Clamp(angularPower, -maxAngularPower, maxAngularPower);
+        //hmm I just use this for now
+        movementVector = Vector3.Lerp(movementVector, transform.forward, Time.deltaTime * 1.2f);
+        //Debug
+        Debug.DrawLine(transform.position, transform.position + transform.forward * 40f, Color.blue);
+        Debug.DrawLine(transform.position, transform.position + movementVector * 40f, Color.red);
 
-        //Debug.Log("RUDDER POWER: " + rudderForce + "ANGULAR: " + angularPower);
-         
-
-
+        currentVelocity = movementVector * propellerPower;
+        Quaternion currentRotation = Quaternion.Euler(transform.rotation.eulerAngles.x,
+                                                      transform.rotation.eulerAngles.y + angularPower * Time.deltaTime,
+                                                      transform.rotation.eulerAngles.z);
         transform.position += currentVelocity * Time.deltaTime;
-        transform.Rotate(0, rudderForce * Time.deltaTime, 0);
+        transform.rotation = currentRotation;
     }
+
+    private void HandlePlayerDriveShip()
+    {
+
+        //foward backwards 
+        float propellerAcceleration = shipWheel.GetPropellerAcceleration();
+        propellerPower += propellerAcceleration * Time.deltaTime;
+        propellerPower = Math.Clamp(propellerPower, shipWheel.GetMaxAsternSpeed(), shipWheel.GetMaxAheadSpeed());
+
+        //prob dont need this when auto drive 
+        //propellerPower += -Math.Sign(propellerPower) * shipWheel.GetPropellerSpeedDecay() * Time.deltaTime;
+
+
+        //Left right 
+        float rudderTurnAcceleration = shipWheel.GetRudderTurnAcceleration();
+
+        rudderAngle += rudderTurnAcceleration * Time.deltaTime;
+        rudderAngle = Math.Clamp(rudderAngle, -shipWheel.GetMaxRudderAngle(), shipWheel.GetMaxRudderAngle());
+        //lets try decay in this way first idk if its good enough 
+        //rudderAngle += -Math.Sign(rudderAngle) * shipWheel.GetRudderAngleDecay() * Time.deltaTime;
+
+        float kFactor = 0.05f;
+
+        //simplified rudder formula 
+        angularPower = propellerPower * rudderAngle * kFactor;
+
+    }
+
+
+    private void HandleAutoDrive()
+    {
+
+        if (targetCheckpoint == null)
+        {
+            Debug.Log("NO CHECKPOINT");
+            return; 
+        }
+
+        Vector3 checkpointPos = targetCheckpoint.transform.position;
+        //now how should i do this ??
+        Vector3 directionVector = (checkpointPos - transform.position).normalized;
+
+
+        propellerPower = shipWheel.GetCruiseSpeed();
+
+        Quaternion newRotation = Quaternion.FromToRotation(transform.forward, directionVector);
+
+        // Get the angle between where we face and where the checkpoint is
+        // Using Vector3.up as the axis ensures we calculate the horizontal (yaw) difference
+        float angleToTarget = Vector3.SignedAngle(transform.forward, directionVector, Vector3.up);
+
+
+        float rudderTurnAcceleration = shipWheel.GetRudderTurnAcceleration();
+        angularPower = angleToTarget * 15 * Time.deltaTime;
+
+
+        //transform.rotation = newRotation;
+
+
+
+    }
+
+
 
     void ReadPropeller(float power)
     {
@@ -191,6 +272,12 @@ public class Ship : MonoBehaviour
         Debug.Log("SHIP HP: " + shipHealth);
     }
 
+
+    private void HandleCheckPoint(DriveCheckpoint newCheckpoint)
+    {
+        targetCheckpoint = newCheckpoint; 
+    }
+
     public void GameSignalResponse(GAMESIGNAL gameSignal)
     {
         Debug.Log("SHIP COMBAT " + gameSignal);
@@ -200,6 +287,8 @@ public class Ship : MonoBehaviour
         if (signal.Contains("START"))
         {
             SwitchShipMode(SHIPMODE.COMBAT);
+
+            onAutoDrive = true;
         }
         else if (signal.Contains("END"))
         {
@@ -226,7 +315,7 @@ public class Ship : MonoBehaviour
                 SwitchShipMode(SHIPMODE.MANUAL_DRIVE);
 
             }
-
+            onAutoDrive = false;
 
             ////default to drive for now 
             //SwitchShipMode(SHIPMODE.DRIVE);
@@ -254,48 +343,24 @@ public class Ship : MonoBehaviour
     }
 
 
-    ////Consider spiltting  to another class this thingy 
-    //public void EnterShipCombatMode(GAMESIGNAL gamePhase)
-    //{
-    //    Debug.Log("SHIP COMBAT MODE " + gamePhase);
-    //    bool isLeft = false;
-
-    //    foreach (PhaseToPosition phasePos in phaseToShootPositions)
-    //    {
-    //        if (phasePos.signal == gamePhase)
-    //        {
-    //            isLeft = phasePos.isLeft;
-    //            break;
-    //        }
-    //    }
+    public float GetPropellerSpeed()
+    {
+        return propellerPower;
+    }
 
 
-    //    GameObject player = GameObject.FindGameObjectWithTag("Player");
-    //    if (player == null)
-    //        return; 
+    public float GetRudderSpeed()
+    {
+        return angularPower;
+    }
 
-    //    GameObject targetPos = starboardShootPoint;
-    //    if (isLeft)
-    //    {
-    //        targetPos = portShootPoint;
-    //    }
 
-    //    player.transform.position = targetPos.gameObject.transform.position;
+    public float DEBUG_GetDistanceToCurrentCheckpoint()
+    {
+        if (targetCheckpoint == null)
+            return 0f;
+        else 
+            return Vector3.Distance(transform.position, targetCheckpoint.transform.position);
+    }
 
-    //    player.transform.rotation = Quaternion.LookRotation(targetPos.gameObject.transform.right, targetPos.gameObject.transform.up);
-    //    isInCombatMode = true;
-
-    //    onShipLockTransform?.Invoke(targetPos.transform);
-    //    onShipIsCombatMode?.Invoke(true);
-    //}
-
-    //public void ExitShipCombatMode()
-    //{
-    //    Debug.Log("SHIP EXITING COMBAT MODE TIME TO DRIVE BOI");
-
-    //    isInCombatMode = false;
-
-    //    //onShipLockTransform?.Invoke(targetPos.transform);
-    //    onShipIsCombatMode?.Invoke(false);
-    //}
 }

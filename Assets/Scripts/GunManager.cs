@@ -1,6 +1,8 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public enum GUNTYPE {
     M1911,
@@ -27,53 +29,91 @@ public class GunManager : MonoBehaviour
 
 
     [SerializeField] private float trailSpeed = 15;
-    [SerializeField] private float gunVerticalLerpFactor;
 
+    [SerializeField] private float gunPositionLerpFactor;
+    [SerializeField] private float gunRotationLerpFactor;
+
+    [SerializeField] private float shootRaycastDistance = 80f;
     [SerializeField] private float autoReloadTime = 0.3f;
 
     [SerializeField] private List<GunTypeContainer> containerList;
 
+    public static Action<int, int> onAmmoCountChanged; 
+
     private GunTypeContainer currentGunContainer;
-    private int currentGunAmmo; 
-    private Vector3 gunTargetPosition; 
+    private int currentGunAmmo;
+
+    private Transform gunPlayerTransform; 
+    //private Vector3 gunTargetPosition; 
     private Vector3 gunFacingDirection;
+
+    //I think i shld just create the 3d mouse pos here instead of from the camera controller 
+    private Vector3 worldMousePos;
+    private Vector2 screenMousePos;
 
     private Transform currentFirePoint;
 
     private bool firedGun;
-    private bool isReloading; 
+    private bool isReloading;
+    private bool isInShootingMode = false;
+    private bool lerpGunPosition = true; 
     private IEnumerator fireRateCoroutine = null;
 
-    private float fireRateTimer = 0; 
+    
+
+    private float fireRateTimer = 0;
+
+    private SHIPMODE referenceShipMode; 
 
     void Awake()
     {
+
+        gunPlayerTransform = GameObject.FindGameObjectWithTag("GunPoint").transform;
         ChangeGun(startingType);
 
         firedGun = false;
         isReloading = false;
+
+
+        onAmmoCountChanged?.Invoke(currentGunAmmo, currentGunContainer.gunData.magazineAmmo);
+
+
     }
 
     private void OnEnable()
     {
         PlayerInputManager.onLeftMouseHold += ShootWeapon;
         CameraController.onFirstPersonCameraRotate += ReadCameraTransform;
-        PlayerMovement.onGunPlaceholderMove += HandleGunTargetPosition;
+        //PlayerMovement.onGunPlaceholderMove += HandleGunTargetPosition;
+
+        Ship.onShipChangedMode += HandleWeaponShipMode;
+
+        //bad way but will work for now 
+        CameraController.onMouseMoved += SetScreenMousePos; 
+        CameraController.onMouseMoved3DPos += Set3DMousePos;
     }
 
     private void OnDisable()
     {
         PlayerInputManager.onLeftMouseHold -= ShootWeapon;
         CameraController.onFirstPersonCameraRotate -= ReadCameraTransform;
-        PlayerMovement.onGunPlaceholderMove -= HandleGunTargetPosition;
+        Ship.onShipChangedMode -= HandleWeaponShipMode;
+
+        CameraController.onMouseMoved -= SetScreenMousePos;
+        CameraController.onMouseMoved3DPos -= Set3DMousePos;
+
+
+        //PlayerMovement.onGunPlaceholderMove -= HandleGunTargetPosition;
+
+
     }
 
     // Update is called once per frame
     void Update()   
     {
-        currentGunContainer.model.transform.position = gunTargetPosition;
-        Vector3 lerpVector = Vector3.Lerp(currentGunContainer.model.transform.forward, gunFacingDirection, Time.deltaTime * gunVerticalLerpFactor);
-        currentGunContainer.model.transform.rotation = Quaternion.LookRotation(lerpVector);
+        //currentGunContainer.model.transform.position = gunTargetPosition;
+        //Vector3 lerpVector = Vector3.Lerp(currentGunContainer.model.transform.forward, gunFacingDirection, Time.deltaTime * gunRotationLerpFactor);
+        //currentGunContainer.model.transform.rotation = Quaternion.LookRotation(lerpVector);
 
 
         if (firedGun)
@@ -87,10 +127,73 @@ public class GunManager : MonoBehaviour
         }
     }
 
+    //private void LateUpdate()
+    //{
+    //    if (gunPlayerTransform != null)
+    //    {
+    //        //currentGunContainer.model.transform.position = gunPlayerTransform.transform.position;
 
-    private void HandleGunTargetPosition(Vector3 targetPos)
+    //        //Vector3 positionLerp = Vector3.Lerp(currentGunContainer.model.transform.position, 
+    //        //                                    gunPlayerTransform.transform.position, 
+    //        //                                    Time.deltaTime * gunPositionLerpFactor);
+
+
+    //        Vector3 positionLerp = gunPlayerTransform.transform.position;
+    //        if (lerpGunPosition)
+    //        {
+    //            positionLerp = Vector3.Lerp(currentGunContainer.model.transform.position,
+    //                        gunPlayerTransform.transform.position,
+    //                        Time.deltaTime * gunPositionLerpFactor);
+    //        }
+
+    //        Vector3 lerpVector = Vector3.Lerp(currentGunContainer.model.transform.forward, 
+    //                                          gunFacingDirection, 
+    //                                          Time.deltaTime * gunRotationLerpFactor);
+
+    //        currentGunContainer.model.transform.position = positionLerp;
+    //        currentGunContainer.model.transform.rotation = Quaternion.LookRotation(lerpVector);
+    //    }
+    //}
+
+
+    private void LateUpdate()
     {
-        gunTargetPosition = targetPos;
+        if (gunPlayerTransform != null)
+        {
+
+            Vector3 positionLerp = Vector3.Lerp(currentGunContainer.model.transform.position,
+                                        gunPlayerTransform.transform.position,
+                                        Time.deltaTime * gunPositionLerpFactor);
+            Vector3 rotationLerp = Vector3.Lerp(currentGunContainer.model.transform.forward,
+                                              gunFacingDirection,
+                                              Time.deltaTime * gunRotationLerpFactor);
+
+            if (referenceShipMode == SHIPMODE.COMBAT)
+            {
+                positionLerp = gunPlayerTransform.transform.position;
+                //Debug.Log("WORLD MOUSE: " + worldMousePos + " GUNTIP: " + currentFirePoint);
+                //Vector3 lookVector = -(worldMousePos - currentGunContainer.model.transform.position).normalized;
+
+
+                Vector3 lookVector = (worldMousePos - currentFirePoint.position).normalized;
+                rotationLerp = Vector3.RotateTowards(
+                                //-currentGunContainer.model.transform.forward,
+                                currentFirePoint.forward,
+                                lookVector,
+                                gunRotationLerpFactor * Time.deltaTime,
+                                0.0f
+                            );
+
+
+                //rotationLerp = Vector3.Lerp(currentGunContainer.model.transform.forward,
+                //                            lookVector,
+                //                            Time.deltaTime * gunRotationLerpFactor);
+            }
+
+            currentGunContainer.model.transform.position = positionLerp;
+            currentGunContainer.model.transform.rotation = Quaternion.LookRotation(rotationLerp); 
+
+        }
     }
 
 
@@ -115,29 +218,42 @@ public class GunManager : MonoBehaviour
 
     private void ShootWeapon()
     {
-
-        if (currentGunContainer == null || firedGun || isReloading)
+        //kinda a bad method should change 
+        if (currentGunContainer == null || firedGun || isReloading || !isInShootingMode)
             return;
-
 
         fireRateTimer = 0f;
         firedGun = true;
 
         currentGunAmmo -= 1;
+        onAmmoCountChanged?.Invoke(currentGunAmmo, currentGunContainer.gunData.magazineAmmo);
+
         if (currentGunAmmo <= 0)
             StartCoroutine(ReloadCoroutine());
 
-        //if (fireRateCoroutine == null)
-        //{
-        //    fireRateCoroutine = ShootFireRateCoroutine();
-        //    StartCoroutine(fireRateCoroutine);
-        //}
-        Debug.Log("CURRENT AMMO: " + currentGunAmmo);
         GameObject instance = Instantiate(DEBUG_GunMuzzleFlash, currentFirePoint.transform);
-        HandleHitScanShoot();
+        HandleMouseRaycastShoot();
     }
 
+    private void HandleMouseRaycastShoot()
+    {
+        Vector2 mousePosition = Mouse.current.position.ReadValue();
+        Ray ray = Camera.main.ScreenPointToRay(mousePosition);
+        RaycastHit hit;
 
+        if (Physics.Raycast(ray, out hit, shootRaycastDistance, enemyLayerMask))
+        {
+            Debug.Log("Hit: " + hit.collider.name);
+
+            Enemy enemyRef = hit.collider.gameObject.GetComponent<Enemy>();
+            if (enemyRef != null)
+            {
+                enemyRef.TakeDamage(currentGunContainer.gunData.damage);
+            }
+        }
+    }
+
+    //For intial testing not gona be used 
     private void HandleHitScanShoot()
     {
         int distance = 100;
@@ -198,5 +314,42 @@ public class GunManager : MonoBehaviour
             }
         }
 
+    }
+
+    private void HandleWeaponShipMode(SHIPMODE mode)
+    {
+        referenceShipMode = mode;
+
+        switch (referenceShipMode)
+        {
+            case SHIPMODE.IDLE:
+                isInShootingMode = false;
+                lerpGunPosition = true;
+                currentGunAmmo = currentGunContainer.gunData.magazineAmmo;
+                onAmmoCountChanged?.Invoke(currentGunAmmo, currentGunContainer.gunData.magazineAmmo);
+                break;
+            case SHIPMODE.MANUAL_DRIVE:
+                lerpGunPosition = true;
+                isInShootingMode = false;
+                currentGunAmmo = currentGunContainer.gunData.magazineAmmo;
+                onAmmoCountChanged?.Invoke(currentGunAmmo, currentGunContainer.gunData.magazineAmmo);
+                break;
+            case SHIPMODE.COMBAT:
+                lerpGunPosition = false;
+                isInShootingMode = true; 
+                break;
+        }
+
+    }
+
+
+    private void SetScreenMousePos(Vector2 mousePos)
+    {
+        screenMousePos = mousePos;  
+    }
+
+    private void Set3DMousePos(Vector3 mousePos3D)
+    {
+        worldMousePos = mousePos3D;
     }
 }

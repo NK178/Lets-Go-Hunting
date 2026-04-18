@@ -21,7 +21,6 @@ public class ShipCombat : MonoBehaviour
     [Header("Ship Combat")]
     [SerializeField] private GameObject starboardShootPoint;
     [SerializeField] private GameObject portShootPoint;
-    [SerializeField] private float shipMaxHealth;
     [SerializeField] private List<PhaseToPosition> phaseToShootPositions;
     [SerializeField] private bool enableDebugPrint = false;
 

@@ -26,7 +26,9 @@ public class CameraController : MonoBehaviour
 
     private CameraCatagory activeCameraCat; 
     public static Action<Vector3, Vector3> onFirstPersonCameraRotate;
-    public static Action<Vector2> onMouseMoved; 
+    public static Action<Vector2> onMouseMoved;
+    public static Action<Vector3> onMouseMoved3DPos; 
+    
 
     private bool cameraLockRotate = false;
 
@@ -112,6 +114,22 @@ public class CameraController : MonoBehaviour
         {
             Vector2 mousePos = Mouse.current.position.ReadValue();
             onMouseMoved?.Invoke(mousePos);
+
+            //Needa figure out what to do for z???
+            Vector3 mousePos3D = mousePos;
+            mousePos3D.z = 100f;
+
+            //float x01 = mousePos.x / Screen.width;
+            //float y01 = mousePos.y / Screen.height;
+
+            //// 3. Remap to -1 to 1 range
+            //float xNorm = (x01 * 2) - 1;
+            //float yNorm = (y01 * 2) - 1;
+
+
+            //Vector3 mousePos3D = new Vector3(xNorm, yNorm, 5);
+
+            onMouseMoved3DPos?.Invoke(mousePos3D);
         }
 
     }

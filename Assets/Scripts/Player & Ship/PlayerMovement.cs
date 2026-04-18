@@ -23,7 +23,7 @@ public class PlayerMovement : MonoBehaviour
 
     //private bool isPlayerDriving = false;
 
-    public static Action<Vector3> onGunPlaceholderMove;
+    //public static Action<Vector3> onGunPlaceholderMove;
 
 
     //private Transform shipShootTransform; 
@@ -139,7 +139,7 @@ public class PlayerMovement : MonoBehaviour
         Vector3 jumpVelocity = Vector3.up * jumpPower;
         verticalVelocity += jumpVelocity;
 
-        onGunPlaceholderMove?.Invoke(gunPlaceholder.position);
+        //onGunPlaceholderMove?.Invoke(gunPlaceholder.position);
     }
 
     void CalculateHorizontalVelocity(Vector2 dir)
@@ -147,7 +147,7 @@ public class PlayerMovement : MonoBehaviour
         Vector3 directionVector = transform.right * dir.x + transform.forward * dir.y;
         horizontalVelocity = directionVector * moveSpeed;
 
-        onGunPlaceholderMove?.Invoke(gunPlaceholder.position);
+        //onGunPlaceholderMove?.Invoke(gunPlaceholder.position);
     }
 
 

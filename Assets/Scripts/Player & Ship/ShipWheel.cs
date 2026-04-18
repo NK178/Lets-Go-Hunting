@@ -6,13 +6,21 @@ public class ShipWheel : MonoBehaviour
     [SerializeField] private Transform playerFixedLocation;
 
 
+    [Header("Propeller")]
     [SerializeField] private float propellerAcceleration;
     [SerializeField] private float maxAheadPropellerSpeed;
     [SerializeField] private float maxAsternPropellerSpeed;
+    [SerializeField] private float propellerSpeedDecay;
 
-
-    [SerializeField] private float rudderTurnSpeed;
+    [Header("Rudder")]
+    [SerializeField] private float rudderTurnAcceleration;
     [SerializeField] private float maxRudderAngle;
+    [SerializeField] private float rudderAngleDecay;
+
+    [Header("Auto Drive")]
+    [SerializeField] private float autoCruiseSpeed;
+
+
 
     private float currentPropellerSpeed;
     private float currentRudderAngle; 
@@ -30,7 +38,13 @@ public class ShipWheel : MonoBehaviour
     public Action<float> onPropellerActive; 
     public Action<float> onRudderActive;
 
-    private SHIPMODE referenceShipMode; 
+    private SHIPMODE referenceShipMode;
+
+
+    //trying out new method 
+    private float currentPropellerAcceleration = 0; 
+    private float currentRudderTurnAcceleration = 0; 
+    private bool isPropellerActive = false; 
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -121,66 +135,129 @@ public class ShipWheel : MonoBehaviour
 
     private void HandleShipControls(Vector2 direction)
     {
-        //if (!isPlayerDriving)
-        //    return; 
-
         if (referenceShipMode != SHIPMODE.MANUAL_DRIVE)
-            return;     
+            return;
 
-        //for moving forward and back 
-
-        if (direction.y != 0)
-            HandleShipPropeller(direction.y);
-
-        if (direction.x != 0)
-            HandleShipRudder(direction.x);
+        HandleShipPropeller(direction.y);
+        HandleShipRudder(direction.x);
     }
 
+
+    //trying out new way 
     private void HandleShipPropeller(float input)
     {
         //going ahead 
         if (input > 0)
-        {
-            currentPropellerSpeed += propellerAcceleration * Time.deltaTime;
-        }
+            currentPropellerAcceleration = propellerAcceleration; 
         else if (input < 0)
-        {
-            currentPropellerSpeed -= propellerAcceleration * Time.deltaTime;
-        }
-
-        //forward postive backwards negative 
-        if (currentPropellerSpeed > maxAheadPropellerSpeed)
-            currentPropellerSpeed = maxAheadPropellerSpeed;
-        else if (currentPropellerSpeed < maxAsternPropellerSpeed)
-            currentPropellerSpeed = maxAsternPropellerSpeed;
-
-        onPropellerActive?.Invoke(currentPropellerSpeed);
+            currentPropellerAcceleration = -propellerAcceleration;
+        else
+            currentPropellerAcceleration = 0f;
     }
 
+    //trying out new way 
     private void HandleShipRudder(float input)
     {
         //going starboard
         if (input > 0)
         {
-            currentRudderAngle += rudderTurnSpeed * Time.deltaTime;
+            currentRudderTurnAcceleration = rudderTurnAcceleration;
         }
         //going port side 
         else if (input < 0)
         {
-            currentRudderAngle -= rudderTurnSpeed * Time.deltaTime;
+            currentRudderTurnAcceleration = -rudderTurnAcceleration;
         }
-
-        if (Mathf.Abs(currentRudderAngle) >= maxRudderAngle)
-        {
-            if (currentRudderAngle < 0)
-                currentRudderAngle = -maxRudderAngle;
-            else
-                currentRudderAngle = maxRudderAngle;
-        }
-
-        onRudderActive?.Invoke(currentRudderAngle);
-
+        else
+            currentRudderTurnAcceleration = 0f;
     }
+
+    public float GetPropellerAcceleration()
+    {
+        return currentPropellerAcceleration; 
+    }
+
+    public float GetRudderTurnAcceleration()
+    {
+        return currentRudderTurnAcceleration; 
+    }
+
+    public float GetMaxAheadSpeed()
+    {
+        return maxAheadPropellerSpeed;
+    }
+
+    public float GetMaxAsternSpeed()
+    {
+        return maxAsternPropellerSpeed;
+    }
+
+    public float GetPropellerSpeedDecay()
+    {
+        return propellerSpeedDecay;
+    }
+
+    public float GetRudderAngleDecay()
+    {
+        return rudderAngleDecay; 
+    }
+
+    public float GetMaxRudderAngle()
+    {
+        return maxRudderAngle;
+    }
+
+    public float GetCruiseSpeed()
+    {
+        return autoCruiseSpeed;
+    }
+
+    //private void HandleShipPropeller(float input)
+    //{
+    //    //going ahead 
+    //    if (input > 0)
+    //    {
+    //        currentPropellerSpeed += propellerAcceleration * Time.deltaTime;
+    //    }
+    //    else if (input < 0)
+    //    {
+    //        currentPropellerSpeed -= propellerAcceleration * Time.deltaTime;
+    //    }
+
+    //    //Hmm i shouldnt do this actually hmmm 
+    //    //forward postive backwards negative 
+    //    if (currentPropellerSpeed > maxAheadPropellerSpeed)
+    //        currentPropellerSpeed = maxAheadPropellerSpeed;
+    //    else if (currentPropellerSpeed < maxAsternPropellerSpeed)
+    //        currentPropellerSpeed = maxAsternPropellerSpeed;
+
+    //    onPropellerActive?.Invoke(currentPropellerSpeed);
+    //}
+
+    //private void HandleShipRudder(float input)
+    //{
+    //    //going starboard
+    //    if (input > 0)
+    //    {
+    //        currentRudderAngle += rudderTurnSpeed * Time.deltaTime;
+    //    }
+    //    //going port side 
+    //    else if (input < 0)
+    //    {
+    //        currentRudderAngle -= rudderTurnSpeed * Time.deltaTime;
+    //    }
+
+    //    if (Mathf.Abs(currentRudderAngle) >= maxRudderAngle)
+    //    {
+    //        if (currentRudderAngle < 0)
+    //            currentRudderAngle = -maxRudderAngle;
+    //        else
+    //            currentRudderAngle = maxRudderAngle;
+    //    }
+
+    //    onRudderActive?.Invoke(currentRudderAngle);
+
+    //}
 
     private void OnTriggerEnter(Collider other)
     {        
