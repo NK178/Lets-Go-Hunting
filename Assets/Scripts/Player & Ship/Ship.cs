@@ -163,7 +163,8 @@ public class Ship : MonoBehaviour
 
         //foward backwards 
         float propellerAcceleration = shipWheel.GetPropellerAcceleration();
-        propellerPower += propellerAcceleration * Time.deltaTime;
+        float propellerDirection = shipWheel.GetPropellerDirection();
+        propellerPower += propellerAcceleration * propellerDirection * Time.deltaTime;
         propellerPower = Math.Clamp(propellerPower, shipWheel.GetMaxAsternSpeed(), shipWheel.GetMaxAheadSpeed());
 
         //prob dont need this when auto drive 
@@ -171,9 +172,10 @@ public class Ship : MonoBehaviour
 
 
         //Left right 
-        float rudderTurnAcceleration = shipWheel.GetRudderTurnAcceleration();
+        float rudderTurnAcceleration = shipWheel.GetRudderAcceleration();
+        float rudderDirection = shipWheel.GetRudderDirection();
 
-        rudderAngle += rudderTurnAcceleration * Time.deltaTime;
+        rudderAngle += rudderTurnAcceleration * rudderDirection * Time.deltaTime;
         rudderAngle = Math.Clamp(rudderAngle, -shipWheel.GetMaxRudderAngle(), shipWheel.GetMaxRudderAngle());
         //lets try decay in this way first idk if its good enough 
         //rudderAngle += -Math.Sign(rudderAngle) * shipWheel.GetRudderAngleDecay() * Time.deltaTime;
@@ -185,9 +187,8 @@ public class Ship : MonoBehaviour
 
     }
 
-
     private void HandleAutoDrive()
-    {
+    {   
 
         if (targetCheckpoint == null)
         {
@@ -199,27 +200,15 @@ public class Ship : MonoBehaviour
         //now how should i do this ??
         Vector3 directionVector = (checkpointPos - transform.position).normalized;
 
+        propellerPower = shipWheel.GetPropellerCruiseSpeed();
 
-        propellerPower = shipWheel.GetCruiseSpeed();
-
-        Quaternion newRotation = Quaternion.FromToRotation(transform.forward, directionVector);
-
-        // Get the angle between where we face and where the checkpoint is
-        // Using Vector3.up as the axis ensures we calculate the horizontal (yaw) difference
+        //havnet used this function b4 
         float angleToTarget = Vector3.SignedAngle(transform.forward, directionVector, Vector3.up);
 
-
-        float rudderTurnAcceleration = shipWheel.GetRudderTurnAcceleration();
-        angularPower = angleToTarget * 15 * Time.deltaTime;
-
-
-        //transform.rotation = newRotation;
-
-
-
+        float rudderTurnAcceleration = shipWheel.GetRudderAcceleration();
+        float rudderCruiseSpeed = shipWheel.GetRudderCruiseSpeed();
+        angularPower = angleToTarget * rudderCruiseSpeed * Time.deltaTime;
     }
-
-
 
     void ReadPropeller(float power)
     {

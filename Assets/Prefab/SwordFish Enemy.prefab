@@ -104,10 +104,11 @@ MonoBehaviour:
   gravity: 0
   maxFlightTime: 4
   minFlightTime: 2
-  numOfHopsMax: 2
-  numOfHopsMin: 1
+  numOfHopsMax: 4
+  numOfHopsMin: 2
   maxTargetDistPercentage: 0.2
   minTargetDistPercentage: 0.4
+  followPointOffset: 5
 --- !u!1 &3267324339240137136
 GameObject:
   m_ObjectHideFlags: 0

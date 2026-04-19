@@ -18,7 +18,8 @@ public class ShipWheel : MonoBehaviour
     [SerializeField] private float rudderAngleDecay;
 
     [Header("Auto Drive")]
-    [SerializeField] private float autoCruiseSpeed;
+    [SerializeField] private float autoPropellerCruiseSpeed;
+    [SerializeField] private float autoRudderCruiseSpeed;
 
 
 
@@ -44,7 +45,11 @@ public class ShipWheel : MonoBehaviour
     //trying out new method 
     private float currentPropellerAcceleration = 0; 
     private float currentRudderTurnAcceleration = 0; 
-    private bool isPropellerActive = false; 
+    private bool isPropellerActive = false;
+
+
+    private int currentRudderDirection;
+    private int currentPropellerDirection;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -143,16 +148,46 @@ public class ShipWheel : MonoBehaviour
     }
 
 
+    ////trying out new way 
+    //private void HandleShipPropeller(float input)
+    //{
+    //    //going ahead 
+    //    if (input > 0)
+    //        currentPropellerAcceleration = propellerAcceleration; 
+    //    else if (input < 0)
+    //        currentPropellerAcceleration = -propellerAcceleration;
+    //    else
+    //        currentPropellerAcceleration = 0f;
+    //}
+
+    ////trying out new way 
+    //private void HandleShipRudder(float input)
+    //{
+    //    //going starboard
+    //    if (input > 0)
+    //    {
+    //        currentRudderTurnAcceleration = rudderTurnAcceleration;
+    //    }
+    //    //going port side 
+    //    else if (input < 0)
+    //    {
+    //        currentRudderTurnAcceleration = -rudderTurnAcceleration;
+    //    }
+    //    else
+    //        currentRudderTurnAcceleration = 0f;
+    //}
+
+
     //trying out new way 
     private void HandleShipPropeller(float input)
     {
         //going ahead 
         if (input > 0)
-            currentPropellerAcceleration = propellerAcceleration; 
+            currentPropellerDirection = 1;
         else if (input < 0)
-            currentPropellerAcceleration = -propellerAcceleration;
+            currentPropellerDirection = -1;
         else
-            currentPropellerAcceleration = 0f;
+            currentPropellerDirection = 0;
     }
 
     //trying out new way 
@@ -160,27 +195,15 @@ public class ShipWheel : MonoBehaviour
     {
         //going starboard
         if (input > 0)
-        {
-            currentRudderTurnAcceleration = rudderTurnAcceleration;
-        }
+            currentRudderDirection = 1;
         //going port side 
         else if (input < 0)
-        {
-            currentRudderTurnAcceleration = -rudderTurnAcceleration;
-        }
+            currentRudderDirection = -1;
         else
-            currentRudderTurnAcceleration = 0f;
+            currentRudderDirection = 0;
     }
 
-    public float GetPropellerAcceleration()
-    {
-        return currentPropellerAcceleration; 
-    }
 
-    public float GetRudderTurnAcceleration()
-    {
-        return currentRudderTurnAcceleration; 
-    }
 
     public float GetMaxAheadSpeed()
     {
@@ -207,10 +230,73 @@ public class ShipWheel : MonoBehaviour
         return maxRudderAngle;
     }
 
-    public float GetCruiseSpeed()
+    public float GetPropellerCruiseSpeed()
     {
-        return autoCruiseSpeed;
+        return autoPropellerCruiseSpeed;
     }
+
+    public float GetRudderCruiseSpeed()
+    {
+        return autoRudderCruiseSpeed;
+    }
+
+    public float GetRudderAcceleration()
+    {
+        return rudderTurnAcceleration;
+    }
+
+    public float GetPropellerAcceleration()
+    {
+        return propellerAcceleration; 
+    }
+
+    public int GetRudderDirection()
+    {
+        return currentRudderDirection; 
+    }
+
+    public int GetPropellerDirection()
+    {
+        return currentPropellerDirection;
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {        
+        if (other.gameObject.tag == "Player")
+        {
+            isPlayerInRange = true;
+            playerRef = other.gameObject.transform;
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.gameObject.tag == "Player")
+        {
+            isPlayerInRange = false;
+            playerRef = null;
+
+        }
+    }
+
+    private void OnShipDeath()
+    {
+        isShipAlive = false;
+    }
+
+
+    ////OLD
+    //public float GetPropellerAccelerationOLD()
+    //{
+    //    return currentPropellerAcceleration;
+    //}
+
+    //public float GetRudderTurnAccelerationOLD()
+    //{
+    //    return currentRudderTurnAcceleration;
+    //}
+    ////
+
 
     //private void HandleShipPropeller(float input)
     //{
@@ -258,30 +344,6 @@ public class ShipWheel : MonoBehaviour
     //    onRudderActive?.Invoke(currentRudderAngle);
 
     //}
-
-    private void OnTriggerEnter(Collider other)
-    {        
-        if (other.gameObject.tag == "Player")
-        {
-            isPlayerInRange = true;
-            playerRef = other.gameObject.transform;
-        }
-    }
-
-    private void OnTriggerExit(Collider other)
-    {
-        if (other.gameObject.tag == "Player")
-        {
-            isPlayerInRange = false;
-            playerRef = null;
-
-        }
-    }
-
-    private void OnShipDeath()
-    {
-        isShipAlive = false;
-    }
 
 
 }

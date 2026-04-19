@@ -45,6 +45,16 @@ public class SectionManager : MonoBehaviour
         if (!isSectionActive)
             return;
 
+        if (currentWaveFunction != null)
+        {
+            Debug.Log("YES");
+            currentWaveFunction.Process(this);
+        }
+        else
+        {
+            Debug.Log("NULL");
+        }
+
         //if (!currentWaveFunction)
         //{
         //    currentWaveFunction.Excute(this);
@@ -64,6 +74,7 @@ public class SectionManager : MonoBehaviour
         //currentWaveIndex++;
     }
 
+    
     public void SwitchToNextWave()
     {
         StopAllCoroutines();
@@ -75,6 +86,8 @@ public class SectionManager : MonoBehaviour
         currentWaveFunction.Excute(this);
 
         currentWaveIndex++;
+
+        isSectionActive = true;
     }
 
 
@@ -82,8 +95,10 @@ public class SectionManager : MonoBehaviour
     {
         if (enableDebugText)
             Debug.Log("START NEW WAVE");
-        currentWaveFunction = waveDataList[currentWaveIndex];
-        currentWaveFunction.Excute(this);
+
+        SwitchToNextWave();
+        //currentWaveFunction = waveDataList[currentWaveIndex];
+        //currentWaveFunction.Excute(this);
     }
 
     public void EndWave()
@@ -100,6 +115,7 @@ public class SectionManager : MonoBehaviour
     }
 
 
+    //Hmmmm potentially need to change this function 
     public void ReadGameSignal(GAMESIGNAL gameSignal)
     {
         if (enableDebugText)

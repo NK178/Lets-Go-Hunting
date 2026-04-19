@@ -18,3 +18,7 @@ MonoBehaviour:
   spawnPointName: SwordFishSpawn
   waveInterval: 2
   spawnWidthDeviateRange: 2.92
+  followShipMovement: 1
+  followDirectionOffset: {x: 42, y: 0, z: -36}
+  followShipRotation: 1
+  followRotationOffset: {x: 0, y: 0, z: 0}

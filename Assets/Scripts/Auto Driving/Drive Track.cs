@@ -94,14 +94,6 @@ public class DriveTrack : MonoBehaviour
         {
             isActive = false;
         }
-
-
-    }
-
-
-    private void ChangeCheckpoint()
-    {
-
     }
 
 
