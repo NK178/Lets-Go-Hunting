@@ -13,7 +13,7 @@ public enum ENEMYTYPE
 public class Enemy : MonoBehaviour
 {
 
-    [SerializeField] private EnemyData enemyData;
+    [SerializeField] protected EnemyData enemyData;
 
     protected float currentHealth; 
     protected bool isActive; 

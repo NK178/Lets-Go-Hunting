@@ -281,7 +281,7 @@ public class Ship : MonoBehaviour
         }
         else if (signal.Contains("END"))
         {
-            SHIPMODE newMode = SHIPMODE.IDLE; 
+            SHIPMODE newMode = SHIPMODE.MANUAL_DRIVE; 
 
             if (newMode == SHIPMODE.IDLE)
             {
@@ -300,7 +300,6 @@ public class Ship : MonoBehaviour
             }
             else if (newMode == SHIPMODE.MANUAL_DRIVE)
             {
-                
                 SwitchShipMode(SHIPMODE.MANUAL_DRIVE);
 
             }

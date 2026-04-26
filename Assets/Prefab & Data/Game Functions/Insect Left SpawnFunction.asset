@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b8b7d2ece18a7b544822bfcbfc933366, type: 3}
+  m_Name: Insect Left SpawnFunction
+  m_EditorClassIdentifier: Assembly-CSharp::SpawnerWaveFunction
+  waveType: 0
+  enemyPrefab: {fileID: 7432267273950587239, guid: 17d4628b668b13d4abb178006a0034e2, type: 3}
+  shipTargetPointName: ShipPoint
+  spawnPointName: Insect Wall Spawn Left
+  waveInterval: 2
+  spawnWidthDeviateRange: 0
+  followShipMovement: 0
+  followDirectionOffset: {x: 0, y: 0, z: 0}
+  followShipRotation: 0
+  followRotationOffset: {x: 0, y: 0, z: 0}

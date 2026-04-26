@@ -47,12 +47,7 @@ public class SectionManager : MonoBehaviour
 
         if (currentWaveFunction != null)
         {
-            Debug.Log("YES");
             currentWaveFunction.Process(this);
-        }
-        else
-        {
-            Debug.Log("NULL");
         }
 
         //if (!currentWaveFunction)
@@ -108,6 +103,7 @@ public class SectionManager : MonoBehaviour
             Debug.Log("END WAVE");
 
         StopAllCoroutines();
+        currentWaveFunction.Exit(this);
         currentWaveIndex++;
         //to end this part 
         if (currentWaveIndex >= waveDataList.Count)

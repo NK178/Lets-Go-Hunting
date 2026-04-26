@@ -31,5 +31,7 @@ public class GameSignal : ScriptableObject
 public enum GAMESIGNAL { 
     START_SECTION_1_SWORDFISH,
     END_SECTION_1_SWORDFISH,
+    START_SECTION2_INSECT,
+    END_SECTION2_INSECT,
     NUM_SIGNALS
 }

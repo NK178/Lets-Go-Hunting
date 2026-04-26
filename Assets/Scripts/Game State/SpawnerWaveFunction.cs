@@ -39,9 +39,21 @@ public class SpawnerWaveFunction : BaseWaveFunction
         startingPosY = spawnPoint.position.y;
     }
 
+    public override void Exit(SectionManager sectionManager)
+    {
+        Debug.Log("WAVE OVER");
+
+        //delete all the childs 
+        foreach(Transform child in spawnPoint.transform)
+        {
+            if (child != null)
+                Destroy(child.gameObject);
+        }
+    }
+
     public override void Process(SectionManager sectionManager)
     {
-        Debug.Log("WORKING");
+
         if (shipTransform == null)
             return;
 
@@ -131,8 +143,11 @@ public class SpawnerWaveFunction : BaseWaveFunction
             Vector3 objectSpawnPoint = spawnPoint.position + spawnPoint.right * widthDeviation;
 
             //Should optimise this later in some object pool 
-            Enemy enemyObject = Instantiate(enemyPrefab, objectSpawnPoint, spawnPoint.rotation);    
-    
+            Enemy enemyObject = Instantiate(enemyPrefab, objectSpawnPoint, spawnPoint.rotation);
+
+
+            ////Hmmm yeah I cant do this way 
+            //enemyObject.gameObject.transform.parent = spawnPoint;
 
             //Debug.Log("EXCUTING AT: " + objectSpawnPoint);
         }

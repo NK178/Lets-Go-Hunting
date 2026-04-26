@@ -16,5 +16,7 @@ abstract public class BaseWaveFunction : ScriptableObject
 
     abstract public void Excute(SectionManager sectionManager); 
 
-    abstract public void Process(SectionManager sectionManager); 
+    abstract public void Process(SectionManager sectionManager);
+
+    abstract public void Exit(SectionManager sectionManager);
 }
