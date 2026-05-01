@@ -190,7 +190,7 @@ MonoBehaviour:
   clingWallLayer:
     serializedVersion: 2
     m_Bits: 128
-  raycastDistance: 3
+  raycastDistance: 2
 --- !u!1 &1387658246911408084
 GameObject:
   m_ObjectHideFlags: 0

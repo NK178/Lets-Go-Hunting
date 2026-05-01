@@ -1,12 +1,7 @@
 using System;
-using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.Runtime.InteropServices;
-using Unity.Cinemachine;
-using Unity.VisualScripting;
+using System.Transactions;
 using UnityEngine;
-using UnityEngine.Rendering.Universal;
-using UnityEngine.UIElements;
+
 
 
 public enum SHIPMODE
@@ -47,6 +42,10 @@ public class Ship : MonoBehaviour
 
     [SerializeField] private float propellerRotationDamping;
     [SerializeField] private float maxPropellerRotateSpeed;
+
+
+    [Header("DEBUG")]
+    [SerializeField] private bool DEBUG_invincible; 
 
     public static Action onShipDeath;
     public static Action<float, float> onShipHealthChanged;
@@ -122,10 +121,6 @@ public class Ship : MonoBehaviour
         DriveTrack.onCheckpointSet -= HandleCheckPoint;
 
     }
-
-
-    [SerializeField] float waterResistance = 10f; // How hard the water fights the turn
-
 
     private void FixedUpdate()
     {
@@ -248,6 +243,9 @@ public class Ship : MonoBehaviour
 
     public void DealDamage(float damage)
     {
+        if (DEBUG_invincible)
+            return; 
+
         shipHealth -= damage; 
         if (shipHealth <= 0)
         {
@@ -328,6 +326,11 @@ public class Ship : MonoBehaviour
             isPlayerOnShip = false;
             other.gameObject.transform.parent = null;
         }
+    }
+
+    public Vector3 GetCurrentVelocity()
+    {
+        return currentVelocity;
     }
 
 

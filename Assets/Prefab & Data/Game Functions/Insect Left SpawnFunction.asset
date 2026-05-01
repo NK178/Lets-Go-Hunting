@@ -17,6 +17,7 @@ MonoBehaviour:
   shipTargetPointName: ShipPoint
   spawnPointName: Insect Wall Spawn Left
   waveInterval: 2
+  spawnDeviationAxisMax: {x: 0, y: 4, z: 0}
   spawnWidthDeviateRange: 0
   followShipMovement: 0
   followDirectionOffset: {x: 0, y: 0, z: 0}

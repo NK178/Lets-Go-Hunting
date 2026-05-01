@@ -107,10 +107,11 @@ MonoBehaviour:
   numOfHopsMin: 3
   maxTargetDistPercentage: 0.2
   minTargetDistPercentage: 0.4
-  followOffsetLocalDirection: {x: 15, y: 0, z: 15}
+  followOffsetLocalDirection: {x: 45, y: 0, z: 15}
   followPointOffset: {x: 17.5, y: 0, z: 6}
-  jumpDistToTargetPercentage: 0.7
+  jumpDistToTargetPercentage: 0.3
   followPointYOffset: 10
+  steeringSensitivity: 0.5
 --- !u!1 &3267324339240137136
 GameObject:
   m_ObjectHideFlags: 0

@@ -10,9 +10,12 @@ public class SpawnerWaveFunction : BaseWaveFunction
     [SerializeField] private string shipTargetPointName;
     [SerializeField] private string spawnPointName; 
     [SerializeField] private float waveInterval;
+
+    [SerializeField] private Vector3 spawnDeviationAxisMax;
+
+    //not used anymore 
     [Range(0, 10f)]
     [SerializeField] private float spawnWidthDeviateRange;
-
 
     [Header("Follow Ship Movement")]
     [SerializeField] private bool followShipMovement;
@@ -26,6 +29,7 @@ public class SpawnerWaveFunction : BaseWaveFunction
     private Transform spawnPoint;
     private Transform shipTransform = null;
     private float startingPosY; 
+
     public override void Excute(SectionManager sectionManager)
     {
         spawnPoint = sectionManager.transform.Find(spawnPointName);
@@ -138,18 +142,24 @@ public class SpawnerWaveFunction : BaseWaveFunction
         {
             yield return new WaitForSeconds(waveInterval);
 
-            float widthDeviation = Random.Range(-spawnWidthDeviateRange, spawnWidthDeviateRange);
 
-            Vector3 objectSpawnPoint = spawnPoint.position + spawnPoint.right * widthDeviation;
+            Vector3 xDeviation = spawnPoint.right * Random.Range(-spawnDeviationAxisMax.x, spawnDeviationAxisMax.x);
+            Vector3 yDeviation = spawnPoint.up * Random.Range(-spawnDeviationAxisMax.y, spawnDeviationAxisMax.y);
+            Vector3 zDeviation = spawnPoint.forward * Random.Range(-spawnDeviationAxisMax.z, spawnDeviationAxisMax.z);
+             
+            Vector3 objectSpawnPoint = spawnPoint.position + xDeviation + yDeviation + zDeviation;  
 
             //Should optimise this later in some object pool 
             Enemy enemyObject = Instantiate(enemyPrefab, objectSpawnPoint, spawnPoint.rotation);
 
 
-            ////Hmmm yeah I cant do this way 
-            //enemyObject.gameObject.transform.parent = spawnPoint;
 
-            //Debug.Log("EXCUTING AT: " + objectSpawnPoint);
+            //float widthDeviation = Random.Range(-spawnWidthDeviateRange, spawnWidthDeviateRange);
+
+            //Vector3 objectSpawnPoint = spawnPoint.position + spawnPoint.right * widthDeviation;
+
+            ////Should optimise this later in some object pool 
+            //Enemy enemyObject = Instantiate(enemyPrefab, objectSpawnPoint, spawnPoint.rotation);
         }
 
     }

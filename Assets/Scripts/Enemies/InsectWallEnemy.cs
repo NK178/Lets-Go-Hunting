@@ -34,13 +34,10 @@ public class InsectWallEnemy : Enemy
         {
             Debug.Log("WALL FOUND");
 
-            Vector3 hitPoint = hitInfo.collider.transform.position;
-            transform.position = hitPoint; 
+            transform.position = hitInfo.point;
 
+            transform.rotation = Quaternion.FromToRotation(transform.up, hitInfo.normal);
         }
-
-
-
     }
 
 
