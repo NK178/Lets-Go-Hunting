@@ -273,8 +273,8 @@ public class Ship : MonoBehaviour
        
         if (signal.Contains("START"))
         {
+            shipCombat.SetGameSignalReference(gameSignal);
             SwitchShipMode(SHIPMODE.COMBAT);
-
             onAutoDrive = true;
         }
         else if (signal.Contains("END"))

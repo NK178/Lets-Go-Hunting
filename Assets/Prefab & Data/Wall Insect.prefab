@@ -186,11 +186,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InsectWallEnemy
   enemyData: {fileID: 11400000, guid: d04f2b00595eb8b4f88829ab8d9d5cca, type: 2}
+  animator: {fileID: 4178998396884746713}
+  movementFactor: 1.4
+  fastMoveSpeed: 20
+  slowMoveSpeed: 13
+  catchUpDistance: 50
+  shipStarboardName: Starboard
+  shipPortName: Port
+  followOffset: {x: 0, y: 9, z: 10}
   clingWallTagName: ClingWall
   clingWallLayer:
     serializedVersion: 2
     m_Bits: 128
   raycastDistance: 2
+  surfaceOffset: 0.5
+  maxAttackWaitTime: 5
+  minAttackWaitTime: 3
+  attackLeapFlightTime: 2
+  leapGravity: -9.81
 --- !u!1 &1387658246911408084
 GameObject:
   m_ObjectHideFlags: 0
@@ -470,6 +483,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 379269548509065403}
+  - component: {fileID: 4178998396884746713}
   m_Layer: 0
   m_Name: Model
   m_TagString: Untagged
@@ -501,6 +515,28 @@ Transform:
   - {fileID: 2577488916511793022}
   m_Father: {fileID: 909048783791775462}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!95 &4178998396884746713
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3008918741466014188}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: ba03c4680e6509f429b1c9a08b5ff481, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &3715907088872099589
 GameObject:
   m_ObjectHideFlags: 0

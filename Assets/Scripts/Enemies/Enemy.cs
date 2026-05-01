@@ -15,6 +15,8 @@ public class Enemy : MonoBehaviour
 
     [SerializeField] protected EnemyData enemyData;
 
+    [SerializeField] protected Animator animator = null; 
+
     protected float currentHealth; 
     protected bool isActive; 
     protected bool isAlive; 

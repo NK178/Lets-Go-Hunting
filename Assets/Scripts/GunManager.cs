@@ -38,6 +38,9 @@ public class GunManager : MonoBehaviour
 
     [SerializeField] private List<GunTypeContainer> containerList;
 
+
+    [SerializeField] private bool DEBUG_disableGunModel; 
+
     public static Action<int, int> onAmmoCountChanged; 
 
     private GunTypeContainer currentGunContainer;
@@ -307,7 +310,8 @@ public class GunManager : MonoBehaviour
             container.model.SetActive(false);
             if (container.gunData.type == gunType)
             {
-                container.model.SetActive(true);
+                if (!DEBUG_disableGunModel)
+                    container.model.SetActive(true);
                 currentGunContainer = container;
                 currentGunAmmo = currentGunContainer.gunData.magazineAmmo;
                 currentFirePoint = container.model.transform.Find("FirePoint");

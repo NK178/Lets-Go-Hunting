@@ -95,6 +95,8 @@ public class ShipCombat : MonoBehaviour
             targetPos = portShootPoint;
         }
 
+        Debug.Log("TARGET POS: " + targetPos.name);
+
         player.transform.position = targetPos.gameObject.transform.position;
 
         player.transform.rotation = Quaternion.LookRotation(targetPos.gameObject.transform.right, targetPos.gameObject.transform.up);

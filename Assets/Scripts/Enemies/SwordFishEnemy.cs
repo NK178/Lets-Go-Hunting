@@ -15,6 +15,7 @@ public class SwordFishEnemy : Enemy
 
     [Header("Targetting")]
     [SerializeField] private string shipTargetPointName;
+    [SerializeField] private string shipTargetSideName;
     [SerializeField] private Vector3 followOffsetLocalDirection;
     [SerializeField] private float jumpDistToTargetPercentage;
     [SerializeField] private float followPointYOffset;
@@ -57,7 +58,19 @@ public class SwordFishEnemy : Enemy
         numOfHops = Random.Range(numOfHopsMin, numOfHopsMax + 1);
         currentNumHops = 0;
 
-        endTarget = GameObject.FindGameObjectWithTag(shipTargetPointName).transform;
+        GameObject[] shipTargetPoints = GameObject.FindGameObjectsWithTag("ShipPoint");
+        foreach (GameObject targetPt in shipTargetPoints)
+        {
+            string pointName = targetPt.name;
+            if (pointName.Contains(shipTargetSideName))
+            {
+                Debug.Log("END TARGET: " + pointName);
+                endTarget = targetPt.transform;
+                return; 
+            }
+        }
+
+        //endTarget = GameObject.FindGameObjectWithTag(shipTargetPointName).transform;
         shipTransform = GameObject.FindGameObjectWithTag("Ship").transform;
         shipRef = shipTransform.GetComponent<Ship>();
 
