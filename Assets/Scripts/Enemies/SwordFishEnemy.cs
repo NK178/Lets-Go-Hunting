@@ -66,7 +66,7 @@ public class SwordFishEnemy : Enemy
             {
                 Debug.Log("END TARGET: " + pointName);
                 endTarget = targetPt.transform;
-                return; 
+                break; 
             }
         }
 
@@ -115,7 +115,6 @@ public class SwordFishEnemy : Enemy
 
         currentVelocity.y += gravityY * Time.deltaTime;
         transform.position += currentVelocity * Time.deltaTime;
-
 
         if (currentNumHops + 1 < numOfHops)
         {

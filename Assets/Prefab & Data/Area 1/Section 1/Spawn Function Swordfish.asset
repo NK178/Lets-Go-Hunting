@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b8b7d2ece18a7b544822bfcbfc933366, type: 3}
+  m_Name: Spawn Function Swordfish
+  m_EditorClassIdentifier: Assembly-CSharp::SpawnerWaveFunction
+  waveType: 0
+  enemyPrefab: {fileID: 7752439744088749315, guid: e24134e47c2fba647878386b148e63b9, type: 3}
+  shipTargetPointName: ShipPoint
+  spawnPointName: SwordFishSpawn
+  waveInterval: 2
+  spawnDeviationAxisMax: {x: 2.92, y: 0, z: 0}
+  spawnWidthDeviateRange: 2.92
+  followShipMovement: 1
+  followDirectionOffset: {x: 42, y: 0, z: -36}
+  followShipRotation: 1
+  followRotationOffset: {x: 0, y: 0, z: 0}

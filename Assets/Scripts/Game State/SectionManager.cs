@@ -1,19 +1,13 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Rendering;
 
-
-//idk if this will work 
 
 public class SectionManager : MonoBehaviour
 {
-
     [SerializeField] private int sectionIndex; 
     [SerializeField] private List<BaseWaveFunction> waveDataList;
 
-
     [SerializeField] private bool enableDebugText = false;
-
 
     private BaseWaveFunction currentWaveFunction;
 
@@ -61,7 +55,7 @@ public class SectionManager : MonoBehaviour
     {
         isSectionActive = true;
 
-        SwitchToNextWave();
+        StartNextWave();
         //currentWaveFunction = waveDataList[currentWaveIndex];
 
         //currentWaveFunction.Excute(this);
@@ -70,11 +64,38 @@ public class SectionManager : MonoBehaviour
     }
 
     
-    public void SwitchToNextWave()
+    //public void SwitchToNextWave()
+    //{
+    //    StopAllCoroutines();
+    //    if (currentWaveIndex >= waveDataList.Count)
+    //        return; 
+
+    //    currentWaveFunction = waveDataList[currentWaveIndex];
+
+    //    currentWaveFunction.Excute(this);
+
+    //    currentWaveIndex++;
+
+    //    isSectionActive = true;
+    //}
+
+
+    //public void StartNextWave()
+    //{
+    //    if (enableDebugText)
+    //        Debug.Log("START NEW WAVE");
+
+    //    SwitchToNextWave();
+    //    //currentWaveFunction = waveDataList[currentWaveIndex];
+    //    //currentWaveFunction.Excute(this);
+    //}
+
+
+    public void StartNextWave()
     {
         StopAllCoroutines();
         if (currentWaveIndex >= waveDataList.Count)
-            return; 
+            return;
 
         currentWaveFunction = waveDataList[currentWaveIndex];
 
@@ -83,17 +104,6 @@ public class SectionManager : MonoBehaviour
         currentWaveIndex++;
 
         isSectionActive = true;
-    }
-
-
-    public void StartNextWave()
-    {
-        if (enableDebugText)
-            Debug.Log("START NEW WAVE");
-
-        SwitchToNextWave();
-        //currentWaveFunction = waveDataList[currentWaveIndex];
-        //currentWaveFunction.Excute(this);
     }
 
     public void EndWave()

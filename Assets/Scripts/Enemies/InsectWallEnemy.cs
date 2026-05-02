@@ -1,5 +1,4 @@
-using System.Runtime.InteropServices.WindowsRuntime;
-using Unity.Hierarchy;
+using System.Collections.Generic;
 using UnityEngine;
 
 //basically my boi will instanly find the wall and cling to it 
@@ -32,8 +31,12 @@ public class InsectWallEnemy : Enemy
 
     [Header("Boid Behaviour")]
     [SerializeField] private float boidDetectionRadius; 
+    [SerializeField] private float seperationDistance;
+    [SerializeField] private float seperationStrength;
 
-    [SerializeField] private float seperationDistance; 
+    [SerializeField] private float alignmentDistance;
+    [SerializeField] private float alignmentStrengthFactor;
+
 
 
     private float attackWaitTime;
@@ -52,8 +55,10 @@ public class InsectWallEnemy : Enemy
 
     private Vector3 wallNormal;
     private Vector3 wallHitPoint;
+    private Vector3 wallPerpenNormal;
 
     private bool shouldCatchUp;
+
 
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -74,12 +79,16 @@ public class InsectWallEnemy : Enemy
 
         if (wallFound && hitInfo.collider != null)
         {
-            //Debug.Log("WALL FOUND");
+            Debug.Log("WALL FOUND");
             transform.rotation = Quaternion.FromToRotation(transform.up, hitInfo.normal);
             Vector3 offsetVector = transform.up * surfaceOffset; 
             transform.position = hitInfo.point + offsetVector;
             wallNormal = hitInfo.normal;
-            wallHitPoint = hitInfo.point;   
+            wallHitPoint = hitInfo.point;
+
+
+            //find this vector 
+            //wallPerpenNormal = Vector3.Cross(wallNormal, hitInfo.collider.transform.forward);
         }
 
         if (!wallFound)
@@ -141,7 +150,7 @@ public class InsectWallEnemy : Enemy
         if (attackWaitTime < 0)
             shouldAttack = true;
 
-        Debug.Log("ATTACK TIME: " + attackWaitTime);
+        //Debug.Log("ATTACK TIME: " + attackWaitTime);
 
         //normal normal movement 
         if (shouldAttack)
@@ -157,8 +166,26 @@ public class InsectWallEnemy : Enemy
         }
         else
         {
-            //Physics.SphereCast()
-            currentVelocity = HandleWallMovement();
+            RaycastHit[] hitTargets = Physics.SphereCastAll(transform.position, boidDetectionRadius, transform.up);
+            List<GameObject> otherBoids = new List<GameObject>();
+            foreach (RaycastHit target in hitTargets)
+            {
+                GameObject targetObject = target.collider.gameObject;
+                //Include all bugs that arent in the middle of attacking 
+                if (targetObject.TryGetComponent<InsectWallEnemy>(out InsectWallEnemy enemy))
+                {
+                    if (!enemy.IsAttacking())
+                        otherBoids.Add(targetObject);
+                }
+            }
+
+            Vector3 seperationVector = BoidSeperation(otherBoids);
+            //Vector3 alignmentVector = BoidAlignment(otherBoids); 
+            //currentVelocity = HandleWallMovement() + seperationVector + alignmentVector;
+
+
+            currentVelocity = HandleWallMovement() + seperationVector;
+            //Debug.Log("alignment: " + alignmentVector);
         }
 
         transform.position += currentVelocity * Time.deltaTime;
@@ -171,21 +198,86 @@ public class InsectWallEnemy : Enemy
     }
 
 
-    private Vector3 BoidSeperation(GameObject[] boids)
+
+    private Vector3 BoidSeperation(List<GameObject> boids)
     {
+        if (boids.Count == 0)
+            return Vector3.zero;
+
         Vector3 resultingVector = Vector3.zero;
 
-        float factor = 2f;
-
-        foreach (GameObject boid in boids) {
+        float sqrSeperationDistance = seperationDistance * seperationDistance;
+        foreach (GameObject boid in boids)
+        {
             Vector3 direction = (boid.transform.position - transform.position).normalized;
-            float distance = (boid.transform.position - transform.position).sqrMagnitude;
+            float sqrDistance = (boid.transform.position - transform.position).sqrMagnitude;
 
-            if (distance < seperationDistance * seperationDistance)
+            if (sqrDistance < sqrSeperationDistance)
             {
-                resultingVector += -direction * factor;
+                resultingVector += -direction * seperationStrength;
+                float proximityMultiplier = 1.0f - (Mathf.Sqrt(sqrDistance) / seperationDistance);
+                resultingVector += direction * (seperationStrength * proximityMultiplier);
             }
         }
+
+        resultingVector = Vector3.ProjectOnPlane(resultingVector, wallNormal);
+        return resultingVector;
+    }
+
+
+
+
+    //private Vector3 BoidSeperation(List<GameObject> boids)
+    //{
+    //    if (boids.Count == 0)    
+    //        return Vector3.zero;    
+
+    //    Vector3 resultingVector = Vector3.zero;
+
+    //    foreach (GameObject boid in boids) {
+    //        Vector3 direction = (boid.transform.position - transform.position).normalized;
+    //        float distance = (boid.transform.position - transform.position).sqrMagnitude;
+
+    //        if (distance < seperationDistance * seperationDistance)
+    //        {
+    //            //resultingVector += -direction * seperationStrength * Time.deltaTime;
+
+    //            resultingVector += -direction * seperationStrength;
+    //        }
+    //    }
+
+    //    resultingVector = Vector3.ProjectOnPlane(resultingVector, wallNormal);
+    //    return resultingVector;
+    //}
+
+    private Vector3 BoidAlignment(List<GameObject> boids)
+    {
+        if (boids.Count == 0)
+            return Vector3.zero;
+        Vector3 resultingVector = Vector3.zero;
+
+        float sqrAlignmentDistance = seperationDistance * seperationDistance;
+
+        int boidInRange = 0;
+
+        Vector3 averageVelocity = Vector3.zero;
+        foreach (GameObject boid in boids)
+        {
+            float sqrDistance = (boid.transform.position - transform.position).sqrMagnitude;
+
+            if (sqrDistance < sqrAlignmentDistance)
+            {
+                averageVelocity += boid.GetComponent<InsectWallEnemy>().GetCurrentVelocity();
+                boidInRange++;
+            }
+        }
+
+        if (boidInRange == 0)
+            return resultingVector;
+
+        averageVelocity /= boidInRange; 
+
+        resultingVector = Vector3.ProjectOnPlane(averageVelocity, wallNormal);
         return resultingVector;
     }
 
@@ -274,6 +366,8 @@ public class InsectWallEnemy : Enemy
         );
     }
 
+
+ 
     private void OnTriggerEnter(Collider other)
     {
         if (other.gameObject.tag == clingWallTagName)
@@ -282,5 +376,43 @@ public class InsectWallEnemy : Enemy
 
             wallRef = other.gameObject; 
         }
+
+        if (other.gameObject.CompareTag("Ship"))
+        {
+            Debug.Log("HIT SHIP");
+            Ship shipRef = other.gameObject.GetComponentInParent<Ship>();
+            if (shipRef != null)
+            {
+                shipRef.DealDamage(enemyData.damage);
+                Destroy(gameObject);
+            }
+        }
+
+    }
+
+
+    public bool IsAttacking()
+    {
+        return hasAttacked;
+    }
+
+    public Vector3 GetCurrentVelocity()
+    {
+        return currentVelocity; 
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.yellow;
+
+        // Draw the starting sphere
+        Gizmos.DrawWireSphere(transform.position, boidDetectionRadius);
+
+        // Draw the cast path (optional: change '10f' to your desired visual distance)
+        Vector3 endPoint = transform.position + (transform.up * 1f);
+        Gizmos.DrawLine(transform.position, endPoint);
+
+        //// Draw the end of the visual range
+        //Gizmos.DrawWireSphere(endPoint, boidDetectionRadius);
     }
 }

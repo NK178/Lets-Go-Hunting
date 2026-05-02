@@ -10,16 +10,20 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b8b7d2ece18a7b544822bfcbfc933366, type: 3}
-  m_Name: SwordFish SpawnFunction
+  m_Name: Spawn Function Wall Insect Left
   m_EditorClassIdentifier: Assembly-CSharp::SpawnerWaveFunction
   waveType: 0
-  enemyPrefab: {fileID: 7752439744088749315, guid: e24134e47c2fba647878386b148e63b9, type: 3}
+  enemyPrefab: {fileID: 7432267273950587239, guid: 17d4628b668b13d4abb178006a0034e2, type: 3}
   shipTargetPointName: ShipPoint
-  spawnPointName: SwordFishSpawn
-  waveInterval: 2
-  spawnDeviationAxisMax: {x: 2.92, y: 0, z: 0}
-  spawnWidthDeviateRange: 2.92
+  spawnPointName: Insect Wall Spawn Left
+  waveInterval: 0.8
+  spawnDeviationAxisMax: {x: 0, y: 8, z: 0}
+  axisSpawnOffset: {x: 2, y: 0, z: 0}
+  spawnWidthDeviateRange: 0
   followShipMovement: 1
-  followDirectionOffset: {x: 42, y: 0, z: -36}
-  followShipRotation: 1
+  followDirectionOffset: {x: -21, y: 0, z: -23}
+  projectMovementOnSurface: 1
+  targetSurfaceTag: ClingWall
+  targetSurfaceName: Cling Wall Left
+  followShipRotation: 0
   followRotationOffset: {x: 0, y: 0, z: 0}

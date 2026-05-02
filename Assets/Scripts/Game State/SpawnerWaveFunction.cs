@@ -12,6 +12,7 @@ public class SpawnerWaveFunction : BaseWaveFunction
     [SerializeField] private float waveInterval;
 
     [SerializeField] private Vector3 spawnDeviationAxisMax;
+    [SerializeField] private Vector3 axisSpawnOffset;
 
     //not used anymore 
     [Range(0, 10f)]
@@ -20,7 +21,10 @@ public class SpawnerWaveFunction : BaseWaveFunction
     [Header("Follow Ship Movement")]
     [SerializeField] private bool followShipMovement;
     [SerializeField] private Vector3 followDirectionOffset;
-    //[SerializeField] private float followDistanceOffset;
+
+    [SerializeField] private bool projectMovementOnSurface;
+    [SerializeField] private string targetSurfaceTag;
+    [SerializeField] private string targetSurfaceName;
 
     [Header("Follow Ship Rotation")]
     [SerializeField] private bool followShipRotation;
@@ -28,7 +32,9 @@ public class SpawnerWaveFunction : BaseWaveFunction
 
     private Transform spawnPoint;
     private Transform shipTransform = null;
-    private float startingPosY; 
+    private float startingPosY;
+
+    private Transform targetSurface; 
 
     public override void Excute(SectionManager sectionManager)
     {
@@ -41,6 +47,19 @@ public class SpawnerWaveFunction : BaseWaveFunction
         shipTransform = GameObject.FindGameObjectWithTag("Ship").gameObject.transform;
 
         startingPosY = spawnPoint.position.y;
+
+        if (projectMovementOnSurface)
+        {
+            GameObject[] objects = GameObject.FindGameObjectsWithTag(targetSurfaceTag);
+            foreach (GameObject obj in objects)
+            {
+                if (obj.name == targetSurfaceName)
+                {
+                    targetSurface = obj.transform;
+                    break;      
+                }
+            }
+        }
     }
 
     public override void Exit(SectionManager sectionManager)
@@ -61,15 +80,36 @@ public class SpawnerWaveFunction : BaseWaveFunction
         if (shipTransform == null)
             return;
 
-        //Follow ship movement based on rotation i think is good 
+        ////Follow ship movement based on rotation i think is good 
+        //if (followShipMovement)
+        //{
+        //    Vector3 localOffset = new Vector3(followDirectionOffset.x, 0, followDirectionOffset.z);
+
+        //    //interesting function 
+        //    Vector3 rotatedOffset = shipTransform.TransformDirection(localOffset);
+
+        //    Vector3 newSpawnPosition = rotatedOffset + new Vector3(shipTransform.position.x, startingPosY, shipTransform.position.z);
+        //    spawnPoint.position = newSpawnPosition;
+        //}
+
+
         if (followShipMovement)
         {
-            Vector3 localOffset = new Vector3(followDirectionOffset.x, 0, followDirectionOffset.z);
+            Vector3 newSpawnPosition = Vector3.zero;
+            Vector3 positionFromShip = CalculatePositionWithShip();
 
-            //interesting function 
-            Vector3 rotatedOffset = shipTransform.TransformDirection(localOffset);
+            //works well lol
+            if (projectMovementOnSurface && targetSurface != null)
+            {
+                Collider surfaceColldier = targetSurface.GetComponent<Collider>();
+                newSpawnPosition = surfaceColldier.ClosestPointOnBounds(positionFromShip);
+                //Debug.Log("PROJECTION: " + newSpawnPosition);
+            }
+            else
+            {
+                newSpawnPosition = positionFromShip;
+            }
 
-            Vector3 newSpawnPosition = rotatedOffset + new Vector3(shipTransform.position.x, startingPosY, shipTransform.position.z);
             spawnPoint.position = newSpawnPosition;
         }
 
@@ -79,61 +119,19 @@ public class SpawnerWaveFunction : BaseWaveFunction
             //shld add rotational offsets in the future 
             spawnPoint.rotation = shipTransform.rotation; 
         }
+    }
 
 
+    private Vector3 CalculatePositionWithShip()
+    {
+        Vector3 newPosition = Vector3.zero;
+        Vector3 localOffset = new Vector3(followDirectionOffset.x, 0, followDirectionOffset.z);
 
-        //Might not be so good
-        //if (followShipMovement)
-        //{
-        //    //gonna have to move the spawnpoint lol 
-        //    Vector3 positionOffset = new Vector3(followDirectionOffset.x,
-        //                                         startingPosY,
-        //                                         followDirectionOffset.z);
+        //interesting function 
+        Vector3 rotatedOffset = shipTransform.TransformDirection(localOffset);
 
-        //    //Vector3 newSpawnPosition = new Vector3(positionOffset.x + shipTransform.position.x,
-        //    //                                       positionOffset.y,
-        //    //                                       positionOffset.z + shipTransform.position.z);
-
-        //    //Vector3 projectedOffset = Vector3.Project(positionOffset, shipTransform.position);
-
-
-        //    //for some reason it works better this way, then uno reverse it
-        //    Vector3 projectedOffset = -Vector3.Project(shipTransform.position, positionOffset);
-        //    //projectedOffset.y = 0;
-
-        //    //Vector3 projectedPosition = followDistanceOffset * projectedOffset + new Vector3(shipTransform.position.x, startingPosY, shipTransform.position.z);
-
-        //    //new Vector3(followDistanceOffset * projectedOffset.x + shipTransform.position.x,
-        //    //                                    followDistanceOffset * positionOffset.y, +startingPosY,
-        //    //                                    followDistanceOffset * projectedOffset.z + shipTransform.position.z);
-
-
-        //    Vector3 projectedPosition = new Vector3(followDistanceOffset * projectedOffset.x + shipTransform.position.x,
-        //                                            startingPosY,
-        //                                            followDistanceOffset * projectedOffset.z + shipTransform.position.z);
-
-
-        //    spawnPoint.position = projectedPosition;
-
-        //    //Debug.Log("NEW SPAWN: " + newSpawnPosition);
-        //}
-
-        //if (followShipMovement)
-        //{
-
-        //    //gonna have to move the spawnpoint lol 
-        //    Vector3 positionOffset = new Vector3(followDirectionOffset.x,
-        //                                         spawnPoint.position.y,
-        //                                         followDirectionOffset.z);
-
-        //    Vector3 newSpawnPosition = new Vector3(followDistanceOffset * positionOffset.x + shipTransform.position.x,
-        //                                           positionOffset.y,
-        //                                           followDistanceOffset * positionOffset.z + shipTransform.position.z);
-
-        //    spawnPoint.position = newSpawnPosition;
-
-        //    //Debug.Log("NEW SPAWN: " + newSpawnPosition);
-        //}
+        newPosition = rotatedOffset + new Vector3(shipTransform.position.x, startingPosY, shipTransform.position.z);
+        return newPosition;
     }
 
     private IEnumerator SpawnerCoroutine(Transform spawnPoint)
@@ -146,20 +144,19 @@ public class SpawnerWaveFunction : BaseWaveFunction
             Vector3 xDeviation = spawnPoint.right * Random.Range(-spawnDeviationAxisMax.x, spawnDeviationAxisMax.x);
             Vector3 yDeviation = spawnPoint.up * Random.Range(-spawnDeviationAxisMax.y, spawnDeviationAxisMax.y);
             Vector3 zDeviation = spawnPoint.forward * Random.Range(-spawnDeviationAxisMax.z, spawnDeviationAxisMax.z);
-             
-            Vector3 objectSpawnPoint = spawnPoint.position + xDeviation + yDeviation + zDeviation;  
+
+
+            Vector3 xOffset = spawnPoint.right * axisSpawnOffset.x;
+            Vector3 yOffset = spawnPoint.up * axisSpawnOffset.y;
+            Vector3 zOffset = spawnPoint.forward * axisSpawnOffset.z;
+
+            Vector3 spawnDeviationVector = xDeviation + yDeviation + zDeviation;
+            Vector3 spawnOffsetVector = xOffset + yOffset + zOffset;    
+
+            Vector3 objectSpawnPoint = spawnPoint.position + spawnDeviationVector + spawnOffsetVector;
 
             //Should optimise this later in some object pool 
             Enemy enemyObject = Instantiate(enemyPrefab, objectSpawnPoint, spawnPoint.rotation);
-
-
-
-            //float widthDeviation = Random.Range(-spawnWidthDeviateRange, spawnWidthDeviateRange);
-
-            //Vector3 objectSpawnPoint = spawnPoint.position + spawnPoint.right * widthDeviation;
-
-            ////Should optimise this later in some object pool 
-            //Enemy enemyObject = Instantiate(enemyPrefab, objectSpawnPoint, spawnPoint.rotation);
         }
 
     }
