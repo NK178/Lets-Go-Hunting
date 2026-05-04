@@ -114,7 +114,7 @@ public class SectionManager : MonoBehaviour
 
         StopAllCoroutines();
         currentWaveFunction.Exit(this);
-        currentWaveIndex++;
+        //currentWaveIndex++;
         //to end this part 
         if (currentWaveIndex >= waveDataList.Count)
             isSectionOver = true; 
@@ -138,6 +138,13 @@ public class SectionManager : MonoBehaviour
         {
             EndWave();
         }
+        else if (signal.Contains("MID"))
+        {
+            Debug.Log("MID SECTION CHANGE");
+            EndWave();
+            StartNextWave();
+        }
+
     }
 
     public bool IsSectionOver()

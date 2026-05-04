@@ -18,7 +18,7 @@ MonoBehaviour:
   spawnPointName: Insect Wall Spawn Left
   waveInterval: 0.8
   spawnDeviationAxisMax: {x: 0, y: 8, z: 0}
-  axisSpawnOffset: {x: 2, y: 0, z: 0}
+  axisSpawnOffset: {x: 1, y: 0, z: 0}
   spawnWidthDeviateRange: 0
   followShipMovement: 1
   followDirectionOffset: {x: -21, y: 0, z: -23}

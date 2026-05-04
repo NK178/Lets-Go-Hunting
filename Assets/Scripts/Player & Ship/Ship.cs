@@ -273,8 +273,9 @@ public class Ship : MonoBehaviour
        
         if (signal.Contains("START"))
         {
-            shipCombat.SetGameSignalReference(gameSignal);
+            //shipCombat.SetGameSignalReference(gameSignal);
             SwitchShipMode(SHIPMODE.COMBAT);
+            shipCombat.SetUpCombatMode(gameSignal);
             onAutoDrive = true;
         }
         else if (signal.Contains("END"))
@@ -306,9 +307,17 @@ public class Ship : MonoBehaviour
             ////default to drive for now 
             //SwitchShipMode(SHIPMODE.DRIVE);
         }
+        else if (signal.Contains("MID"))
+        {
+            shipCombat.SetUpCombatMode(gameSignal);
+
+            ////For switching sides 
+            //shipCombat.SetGameSignalReference(gameSignal);
+            //shipCombat.EnterShipCombatMode(gameSignal);
+        }
 
     }
-        
+
 
     private void OnTriggerEnter(Collider other)
     {

@@ -26,8 +26,6 @@ public class UIManager : MonoBehaviour
     
 
 
-
-
     private Vector2 originalHealthSizeDelta;
     private Vector2 originalCrosshairPosition; 
     
@@ -63,7 +61,6 @@ public class UIManager : MonoBehaviour
 
         Ship.onShipChangedMode -= HandleUIShipMode;
     }
-
 
 
     private void HandleUIShipMode(SHIPMODE shipMode)

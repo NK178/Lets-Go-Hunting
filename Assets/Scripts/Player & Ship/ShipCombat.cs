@@ -53,23 +53,16 @@ public class ShipCombat : MonoBehaviour
         
     }
 
+
     private void HandleShipMode(SHIPMODE mode)
     {
-
-        if (mode == SHIPMODE.COMBAT)
-        {
-            if (enableDebugPrint)
-                Debug.Log("ENTERING COMBAT MODE");
-            EnterShipCombatMode(currentWaveSignal);
-        }
-        else if (mode == SHIPMODE.IDLE || mode == SHIPMODE.MANUAL_DRIVE)
+        if (mode == SHIPMODE.IDLE || mode == SHIPMODE.MANUAL_DRIVE)
         {
             ExitShipCombatMode();
         }
     }
 
-    //Consider spiltting  to another class this thingy 
-    public void EnterShipCombatMode(GAMESIGNAL gamePhase)
+    public void SetUpCombatMode(GAMESIGNAL gamePhase)
     {
         if (enableDebugPrint)
             Debug.Log("SHIP COMBAT MODE " + gamePhase);
@@ -102,6 +95,60 @@ public class ShipCombat : MonoBehaviour
         player.transform.rotation = Quaternion.LookRotation(targetPos.gameObject.transform.right, targetPos.gameObject.transform.up);
         onShipLockTransform?.Invoke(targetPos.transform);
     }
+
+
+
+    //This method is kinda werid, let me try a different way 
+
+    //private void HandleShipMode(SHIPMODE mode)
+    //{
+
+    //    if (mode == SHIPMODE.COMBAT)
+    //    {
+    //        if (enableDebugPrint)
+    //            Debug.Log("ENTERING COMBAT MODE");
+    //        EnterShipCombatMode(currentWaveSignal);
+    //    }
+    //    else if (mode == SHIPMODE.IDLE || mode == SHIPMODE.MANUAL_DRIVE)
+    //    {
+    //        ExitShipCombatMode();
+    //    }
+    //}
+
+    ////Consider spiltting  to another class this thingy 
+    //public void EnterShipCombatMode(GAMESIGNAL gamePhase)
+    //{
+    //    if (enableDebugPrint)
+    //        Debug.Log("SHIP COMBAT MODE " + gamePhase);
+
+    //    bool isLeft = false;
+
+    //    foreach (PhaseToPosition phasePos in phaseToShootPositions)
+    //    {
+    //        if (phasePos.signal == gamePhase)
+    //        {
+    //            isLeft = phasePos.isLeft;
+    //            break;
+    //        }
+    //    }
+
+    //    GameObject player = GameObject.FindGameObjectWithTag("Player");
+    //    if (player == null)
+    //        return;
+
+    //    GameObject targetPos = starboardShootPoint;
+    //    if (isLeft)
+    //    {
+    //        targetPos = portShootPoint;
+    //    }
+
+    //    Debug.Log("TARGET POS: " + targetPos.name);
+
+    //    player.transform.position = targetPos.gameObject.transform.position;
+
+    //    player.transform.rotation = Quaternion.LookRotation(targetPos.gameObject.transform.right, targetPos.gameObject.transform.up);
+    //    onShipLockTransform?.Invoke(targetPos.transform);
+    //}
 
     public void ExitShipCombatMode()
     {

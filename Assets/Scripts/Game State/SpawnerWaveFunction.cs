@@ -42,7 +42,6 @@ public class SpawnerWaveFunction : BaseWaveFunction
 
         sectionManager.StartCoroutine(SpawnerCoroutine(spawnPoint));
 
-
         //maybe i can go find the target points instead 
         shipTransform = GameObject.FindGameObjectWithTag("Ship").gameObject.transform;
 
@@ -56,10 +55,16 @@ public class SpawnerWaveFunction : BaseWaveFunction
                 if (obj.name == targetSurfaceName)
                 {
                     targetSurface = obj.transform;
+
+                    //match the rotation as well hm 
+                    spawnPoint.transform.rotation = targetSurface.rotation;
                     break;      
                 }
             }
         }
+
+
+           
     }
 
     public override void Exit(SectionManager sectionManager)
@@ -102,8 +107,7 @@ public class SpawnerWaveFunction : BaseWaveFunction
             if (projectMovementOnSurface && targetSurface != null)
             {
                 Collider surfaceColldier = targetSurface.GetComponent<Collider>();
-                newSpawnPosition = surfaceColldier.ClosestPointOnBounds(positionFromShip);
-                //Debug.Log("PROJECTION: " + newSpawnPosition);
+                newSpawnPosition = surfaceColldier.ClosestPoint(positionFromShip);
             }
             else
             {

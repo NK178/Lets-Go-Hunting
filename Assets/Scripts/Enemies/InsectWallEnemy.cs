@@ -45,8 +45,9 @@ public class InsectWallEnemy : Enemy
 
     private Transform endTarget;
     private Transform shipTransform;
+    private Transform targetSurface;
     private Ship shipRef;
-    private GameObject wallRef;
+    //private GameObject wallRef;
 
     private Vector3 currentVelocity; 
 
@@ -79,14 +80,14 @@ public class InsectWallEnemy : Enemy
 
         if (wallFound && hitInfo.collider != null)
         {
-            Debug.Log("WALL FOUND");
+            //Debug.Log("WALL FOUND");
             transform.rotation = Quaternion.FromToRotation(transform.up, hitInfo.normal);
             Vector3 offsetVector = transform.up * surfaceOffset; 
             transform.position = hitInfo.point + offsetVector;
             wallNormal = hitInfo.normal;
             wallHitPoint = hitInfo.point;
 
-
+            targetSurface = hitInfo.collider.transform;
             //find this vector 
             //wallPerpenNormal = Vector3.Cross(wallNormal, hitInfo.collider.transform.forward);
         }
@@ -94,6 +95,7 @@ public class InsectWallEnemy : Enemy
         if (!wallFound)
         {
             Debug.Log("WALL NOT FOUND");
+            Destroy(gameObject);
             return; 
         }
 
@@ -190,14 +192,15 @@ public class InsectWallEnemy : Enemy
 
         transform.position += currentVelocity * Time.deltaTime;
 
+        if (hasReachedTheEdge())
+            isAlive = false;
+
         Debug.DrawLine(transform.position, wallFollowPoint, Color.red);
         Debug.DrawLine(transform.position, worldFollowPoint, Color.yellow);
 
         //Debug.DrawLine(transform.position, transform.position + transform.right * raycastDistance, Color.red);
         //Debug.DrawLine(transform.position, transform.position + -transform.right * raycastDistance, Color.red);
     }
-
-
 
     private Vector3 BoidSeperation(List<GameObject> boids)
     {
@@ -223,32 +226,6 @@ public class InsectWallEnemy : Enemy
         resultingVector = Vector3.ProjectOnPlane(resultingVector, wallNormal);
         return resultingVector;
     }
-
-
-
-
-    //private Vector3 BoidSeperation(List<GameObject> boids)
-    //{
-    //    if (boids.Count == 0)    
-    //        return Vector3.zero;    
-
-    //    Vector3 resultingVector = Vector3.zero;
-
-    //    foreach (GameObject boid in boids) {
-    //        Vector3 direction = (boid.transform.position - transform.position).normalized;
-    //        float distance = (boid.transform.position - transform.position).sqrMagnitude;
-
-    //        if (distance < seperationDistance * seperationDistance)
-    //        {
-    //            //resultingVector += -direction * seperationStrength * Time.deltaTime;
-
-    //            resultingVector += -direction * seperationStrength;
-    //        }
-    //    }
-
-    //    resultingVector = Vector3.ProjectOnPlane(resultingVector, wallNormal);
-    //    return resultingVector;
-    //}
 
     private Vector3 BoidAlignment(List<GameObject> boids)
     {
@@ -280,6 +257,63 @@ public class InsectWallEnemy : Enemy
         resultingVector = Vector3.ProjectOnPlane(averageVelocity, wallNormal);
         return resultingVector;
     }
+
+    private bool hasReachedTheEdge()
+    {
+        MeshRenderer meshRenderer = targetSurface.GetComponent<MeshRenderer>();
+        Collider surfaceCollider = targetSurface.GetComponent<Collider>();
+        Vector3 meshExtents = meshRenderer.localBounds.extents;
+        Vector3 meshCenter = meshRenderer.localBounds.center;
+
+        Vector3 projectedPoint = surfaceCollider.ClosestPoint(transform.position);
+        Vector3 localPoint = targetSurface.InverseTransformPoint(projectedPoint);
+
+        float margin = 0.03f;
+        bool offEdgeZ = Mathf.Abs(localPoint.z - meshCenter.z) >= meshExtents.z - margin;
+
+        if (offEdgeZ)
+        {
+            return true;
+        }
+        return false;
+    }
+
+
+
+    //private bool hasReachedTheEdge()
+    //{
+    //    bool result = false;
+    //    Collider surfaceColldier = targetSurface.GetComponent<Collider>();
+    //    Vector3 projectedPoint = surfaceColldier.ClosestPoint(transform.position);
+    //    Vector3 halfSize = surfaceColldier.bounds.extents;
+
+    //    Vector3 localPoint = targetSurface.InverseTransformPoint(projectedPoint);
+
+    //    if (Mathf.Abs(localPoint.z) >= halfSize.z)
+    //    {
+    //        Debug.Log("Reached the horizontal edge!");
+    //        result = true;
+    //    }
+
+    //    Debug.Log("LP: " + localPoint.z + "half: " + halfSize.x);
+
+    //    return result; 
+    //}
+
+
+    //void OnDrawGizmos()
+    //{
+    //    if (targetSurface == null) return;
+
+    //    Collider surfaceColldier = targetSurface.GetComponent<Collider>();
+    //    //Vector3 projectedPoint = surfaceColldier.ClosestPoint(transform.position);
+    //    Vector3 halfSize = surfaceColldier.bounds.extents;
+    //    Vector3 rightEdgeLocal = new Vector3(0, 0, halfSize.z);
+    //    Vector3 rightEdgeWorld = targetSurface.TransformPoint(rightEdgeLocal);
+
+    //    Gizmos.color = Color.green;
+    //    Gizmos.DrawSphere(rightEdgeWorld, 0.2f);
+    //}
 
     private Vector3 HandleWallMovement()
     {
@@ -314,8 +348,7 @@ public class InsectWallEnemy : Enemy
 
     private Vector3 HandleLeapAttack()
     {
-
-        Debug.Log("LEAPING");
+        //Debug.Log("LEAPING");
         Vector3 resultingVector = Vector3.zero;
         Vector3 shipVelocity = shipRef.GetCurrentVelocity();
         resultingVector = CalculateForce(endTarget.transform.position, shipVelocity);
@@ -370,16 +403,15 @@ public class InsectWallEnemy : Enemy
  
     private void OnTriggerEnter(Collider other)
     {
-        if (other.gameObject.tag == clingWallTagName)
-        {
-            Debug.Log("FOUND WALL");
+        //if (other.gameObject.tag == clingWallTagName)
+        //{
+        //    //Debug.Log("FOUND WALL");
 
-            wallRef = other.gameObject; 
-        }
+        //    wallRef = other.gameObject; 
+        //}
 
         if (other.gameObject.CompareTag("Ship"))
         {
-            Debug.Log("HIT SHIP");
             Ship shipRef = other.gameObject.GetComponentInParent<Ship>();
             if (shipRef != null)
             {
@@ -414,5 +446,17 @@ public class InsectWallEnemy : Enemy
 
         //// Draw the end of the visual range
         //Gizmos.DrawWireSphere(endPoint, boidDetectionRadius);
+
+
+        if (targetSurface == null) return;
+
+        Collider surfaceColldier = targetSurface.GetComponent<Collider>();
+        //Vector3 projectedPoint = surfaceColldier.ClosestPoint(transform.position);
+        Vector3 halfSize = surfaceColldier.bounds.extents;
+        Vector3 rightEdgeLocal = new Vector3(0, 0, halfSize.z);
+        Vector3 rightEdgeWorld = targetSurface.TransformPoint(rightEdgeLocal);
+
+        Gizmos.color = Color.green;
+        Gizmos.DrawSphere(rightEdgeWorld, 0.2f);
     }
 }

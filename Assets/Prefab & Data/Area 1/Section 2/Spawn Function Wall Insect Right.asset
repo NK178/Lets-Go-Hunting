@@ -15,10 +15,10 @@ MonoBehaviour:
   waveType: 0
   enemyPrefab: {fileID: 7432267273950587239, guid: 17d4628b668b13d4abb178006a0034e2, type: 3}
   shipTargetPointName: ShipPoint
-  spawnPointName: Insect Wall Spawn Left
+  spawnPointName: Insect Wall Spawn Right
   waveInterval: 0.8
   spawnDeviationAxisMax: {x: 0, y: 8, z: 0}
-  axisSpawnOffset: {x: 2, y: 0, z: 0}
+  axisSpawnOffset: {x: -1, y: 0, z: 0}
   spawnWidthDeviateRange: 0
   followShipMovement: 1
   followDirectionOffset: {x: 21, y: 0, z: -23}
