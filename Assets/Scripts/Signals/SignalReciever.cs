@@ -1,3 +1,5 @@
+using NUnit.Framework;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -38,6 +40,21 @@ public class SignalReciever : MonoBehaviour
         //Debug.Log("RECIEVED SIGNAL");
         OnSignalRecieved?.Invoke(gamePhase);
     }
+
+    //useful function 
+    public List<GAMESIGNAL> GetAllEndSignalNames()
+    {
+        List<GAMESIGNAL> endSignalNames = new List<GAMESIGNAL>();
+
+        foreach (GameSignal signal in recieveSignals)
+        {
+            string signalName = signal.GetSignalName().ToString();
+            if (signalName.Contains("END"))
+                endSignalNames.Add(signal.GetSignalName());
+        }
+        return endSignalNames; 
+    }
+
 
     // Update is called once per frame
     void Update()

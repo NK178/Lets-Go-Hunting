@@ -2,6 +2,7 @@ using System.Collections;
 using UnityEngine;
 
 
+// 5/7 I can make this multi dimensional, spawn both boss and wave stuff 
 [CreateAssetMenu(fileName = "SpawnerWaveFunction", menuName = "Scriptable Objects/SpawnerWaveFunction")]
 public class SpawnerWaveFunction : BaseWaveFunction
 {

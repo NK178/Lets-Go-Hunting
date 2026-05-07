@@ -14,13 +14,21 @@ public class SectionManager : MonoBehaviour
     private int currentWaveIndex; 
 
     private bool isSectionOver = false;
-    private bool isSectionActive = false;
-
-
 
     //public GAMESIGNAL lastRecievedGameSignal; 
 
-    void Awake()
+    //void Awake()
+    //{
+    //    currentWaveIndex = 0;
+
+    //    //register itself with the Game Manager 
+    //    if (GameManager.Instance != null)
+    //    {
+    //        GameManager.Instance.RegisterSection(this);
+    //    }
+    //}
+
+    private void Start()
     {
         currentWaveIndex = 0;
 
@@ -29,14 +37,13 @@ public class SectionManager : MonoBehaviour
         {
             GameManager.Instance.RegisterSection(this);
         }
-
     }
 
     // Update is called once per frame
     void Update()
     {
 
-        if (!isSectionActive)
+        if (isSectionOver)
             return;
 
         if (currentWaveFunction != null)
@@ -53,7 +60,7 @@ public class SectionManager : MonoBehaviour
 
     public void InitSection()
     {
-        isSectionActive = true;
+        isSectionOver = false;
 
         StartNextWave();
         //currentWaveFunction = waveDataList[currentWaveIndex];
@@ -103,21 +110,24 @@ public class SectionManager : MonoBehaviour
 
         currentWaveIndex++;
 
-        isSectionActive = true;
+        isSectionOver = false; 
     }
 
     public void EndWave()
     {
 
         if (enableDebugText)
-            Debug.Log("END WAVE");
+            Debug.Log("END WAVE CURR INDEX: " + currentWaveIndex + " TOTAL: " + waveDataList.Count);
 
         StopAllCoroutines();
         currentWaveFunction.Exit(this);
         //currentWaveIndex++;
         //to end this part 
-        if (currentWaveIndex >= waveDataList.Count)
-            isSectionOver = true; 
+        if (currentWaveIndex + 1 >= waveDataList.Count)
+        {
+            Debug.Log("SECTION IS OVER");
+            isSectionOver = true;
+        }
     }
 
 

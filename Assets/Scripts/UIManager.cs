@@ -24,8 +24,6 @@ public class UIManager : MonoBehaviour
     [SerializeField] private TMP_Text shipRudderForce; 
     [SerializeField] private TMP_Text targetCheckpointDistance; 
     
-
-
     private Vector2 originalHealthSizeDelta;
     private Vector2 originalCrosshairPosition; 
     

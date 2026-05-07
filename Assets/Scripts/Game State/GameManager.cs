@@ -18,7 +18,12 @@ public class GameManager : MonoBehaviour
 
     private List<SectionManager> sectionsInSceneList;
     [SerializeField] private float loadSectionWaitTime; 
-    [HideInInspector] public GAMESTATE currentGameState; 
+    [HideInInspector] public GAMESTATE currentGameState;
+
+    //For now, I guess I will keep a linear strucutre, maybe in the future I will develop branching paths 
+    //Since i not doing some complicated nonsense, strings will surfice for now, I can steal other methods in the future 
+    [SerializeField] private List<string> sceneOrderList;
+    private int currentSceneIndex;
 
 
     private int currentSection;
@@ -99,7 +104,9 @@ public class GameManager : MonoBehaviour
         {
             if (section == sect)
                 return; 
-        }
+        }   
+
+        Debug.Log("INITALIZED: " + section.gameObject.name);
         sectionsInSceneList.Add(section);
     }
 
@@ -123,7 +130,39 @@ public class GameManager : MonoBehaviour
         //    StartCoroutine(LoadSectionCoroutine());
         //}
     }
+     
 
+    
+    //does not mark the end of a level, but of a scene 
+    public void RecieveEndSceneSignal(GAMESIGNAL gameSignal)
+    {
+        if (!gameSignal.ToString().Contains("END"))
+            return;
+
+        Debug.Log("END GAME");
+
+        //safety check, shld not happen tho 
+        foreach (SectionManager section in sectionsInSceneList)
+        {
+            if (!section.IsSectionOver())
+            {
+                Debug.Log("SECTION: " + section.gameObject.name + " NOT OVER");
+                return; 
+            }
+        }
+
+        currentSceneIndex++;
+        if (currentSceneIndex == sceneOrderList.Count)
+        {
+            Debug.Log("SCENE INDEX OUT OF RANGE AT " + currentSceneIndex);
+            return; 
+        }
+        string nextScene = sceneOrderList[currentSceneIndex];
+
+        //just debug loading 
+        SceneManager.LoadScene(nextScene);
+
+    }
 
     //private IEnumerator LoadSectionCoroutine()
     //{

@@ -23,6 +23,11 @@ public class GameSignal : ScriptableObject
     {
         OnSignalRaised -= listener;
     }
+
+    public GAMESIGNAL GetSignalName()
+    {
+        return gamePhase; 
+    }
 }
 
 
@@ -34,5 +39,9 @@ public enum GAMESIGNAL {
     START_SECTION2_INSECT_LEFTSIDE,
     MID_SECTION2_INSECT_RIGHTSIDE,
     END_SECTION2_INSECT,
+    START_SECTION3_SHARK, 
+    //PROB GONNA HAVE LOTS OF MID SECTIONS OR SMTH 
+    //END_SECTION3_SHARK,
+    END_AREA, //aka switch scene
     NUM_SIGNALS
 }
