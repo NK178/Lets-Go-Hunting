@@ -10,21 +10,20 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b8b7d2ece18a7b544822bfcbfc933366, type: 3}
-  m_Name: Spawn Function Swordfish
+  m_Name: Shark Spawner
   m_EditorClassIdentifier: Assembly-CSharp::SpawnerWaveFunction
-  waveType: 0
-  enemyPrefab: {fileID: 7752439744088749315, guid: e24134e47c2fba647878386b148e63b9, type: 3}
+  waveType: 1
+  enemyPrefab: {fileID: 1895376357804649870, guid: 415c2bbc94864274088be90a3018adf8, type: 3}
   shipTargetPointName: ShipPoint
-  spawnPointName: SwordFishSpawn
-  waveInterval: 2
-  startingDelay: 0
-  spawnDeviationAxisMax: {x: 2.92, y: 0, z: 0}
+  spawnPointName: Shark Spawn Point
+  waveInterval: 0
+  startingDelay: 2
+  spawnDeviationAxisMax: {x: 0, y: 0, z: 0}
   axisSpawnOffset: {x: 0, y: 0, z: 0}
-  spawnWidthDeviateRange: 2.92
   followShipMovement: 1
-  followDirectionOffset: {x: 42, y: 0, z: -36}
+  followDirectionOffset: {x: 0, y: 0, z: -5}
   projectMovementOnSurface: 0
   targetSurfaceTag: 
   targetSurfaceName: 
-  followShipRotation: 1
+  followShipRotation: 0
   followRotationOffset: {x: 0, y: 0, z: 0}

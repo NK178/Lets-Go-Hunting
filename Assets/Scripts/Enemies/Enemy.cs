@@ -5,7 +5,7 @@ using UnityEngine;
 public enum ENEMYTYPE
 {
     SWARM, 
-
+    BOSS,   
     NUM_TYPE
 }
 

@@ -103,7 +103,7 @@ GameObject:
   - component: {fileID: 6474050637304699123}
   - component: {fileID: 7432267273950587239}
   m_Layer: 6
-  m_Name: Wall Insect
+  m_Name: Wall Insect Enemy
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

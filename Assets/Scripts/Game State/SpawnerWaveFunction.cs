@@ -1,6 +1,6 @@
 using System.Collections;
+using Unity.VisualScripting;
 using UnityEngine;
-
 
 // 5/7 I can make this multi dimensional, spawn both boss and wave stuff 
 [CreateAssetMenu(fileName = "SpawnerWaveFunction", menuName = "Scriptable Objects/SpawnerWaveFunction")]
@@ -12,12 +12,10 @@ public class SpawnerWaveFunction : BaseWaveFunction
     [SerializeField] private string spawnPointName; 
     [SerializeField] private float waveInterval;
 
+    [SerializeField] private float startingDelay = 0; 
+
     [SerializeField] private Vector3 spawnDeviationAxisMax;
     [SerializeField] private Vector3 axisSpawnOffset;
-
-    //not used anymore 
-    [Range(0, 10f)]
-    [SerializeField] private float spawnWidthDeviateRange;
 
     [Header("Follow Ship Movement")]
     [SerializeField] private bool followShipMovement;
@@ -34,14 +32,17 @@ public class SpawnerWaveFunction : BaseWaveFunction
     private Transform spawnPoint;
     private Transform shipTransform = null;
     private float startingPosY;
-
-    private Transform targetSurface; 
+    
+    private Transform targetSurface;
+    private bool isCoroutineRunning = false;
 
     public override void Excute(SectionManager sectionManager)
     {
         spawnPoint = sectionManager.transform.Find(spawnPointName);
 
-        sectionManager.StartCoroutine(SpawnerCoroutine(spawnPoint));
+        sectionManager.StartCoroutine(BeginSpawnCoroutine(sectionManager));
+
+        //sectionManager.StartCoroutine(SpawnerCoroutine(spawnPoint));
 
         //maybe i can go find the target points instead 
         shipTransform = GameObject.FindGameObjectWithTag("Ship").gameObject.transform;
@@ -139,10 +140,19 @@ public class SpawnerWaveFunction : BaseWaveFunction
         return newPosition;
     }
 
+
+    private IEnumerator BeginSpawnCoroutine(SectionManager sectionManager)
+    {
+        yield return new WaitForSeconds(startingDelay);
+        isCoroutineRunning = true; 
+        sectionManager.StartCoroutine(SpawnerCoroutine(spawnPoint));
+    }
+
     private IEnumerator SpawnerCoroutine(Transform spawnPoint)
     {
-        while (true)
+        while (isCoroutineRunning)
         {
+            Debug.Log("RUNNING COROUTINE");
             yield return new WaitForSeconds(waveInterval);
 
 
@@ -162,6 +172,11 @@ public class SpawnerWaveFunction : BaseWaveFunction
 
             //Should optimise this later in some object pool 
             Enemy enemyObject = Instantiate(enemyPrefab, objectSpawnPoint, spawnPoint.rotation);
+
+
+            //For one time spawning, stop coroutine immedietly if wave interval = 0 
+            if (waveInterval == 0)
+                isCoroutineRunning = false;
         }
 
     }
