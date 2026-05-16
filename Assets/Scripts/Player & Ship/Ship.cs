@@ -1,5 +1,4 @@
 using System;
-using System.Transactions;
 using UnityEngine;
 
 
@@ -15,8 +14,6 @@ public enum SHIPMODE
 
 public class Ship : MonoBehaviour
 {
-
-    [SerializeField] private Vector3 DEBUG_travelDirection;
     [SerializeField] private float DEBUG_waveRockStrength;
 
 

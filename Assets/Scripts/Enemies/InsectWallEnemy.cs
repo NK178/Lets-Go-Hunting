@@ -68,7 +68,7 @@ public class InsectWallEnemy : Enemy
         //double raycast to find the wall 
         bool wallFound = false;
         bool isRightWall = false;
-        RaycastHit hitInfo; 
+        RaycastHit hitInfo;
         if (Physics.Raycast(transform.position, transform.right, out hitInfo, raycastDistance, clingWallLayer))
             wallFound = isRightWall = true;
 
@@ -82,7 +82,7 @@ public class InsectWallEnemy : Enemy
         {
             //Debug.Log("WALL FOUND");
             transform.rotation = Quaternion.FromToRotation(transform.up, hitInfo.normal);
-            Vector3 offsetVector = transform.up * surfaceOffset; 
+            Vector3 offsetVector = transform.up * surfaceOffset;
             transform.position = hitInfo.point + offsetVector;
             wallNormal = hitInfo.normal;
             wallHitPoint = hitInfo.point;
@@ -96,7 +96,7 @@ public class InsectWallEnemy : Enemy
         {
             Debug.Log("WALL NOT FOUND");
             Destroy(gameObject);
-            return; 
+            return;
         }
 
         string endTargetName = string.Empty;
@@ -127,12 +127,12 @@ public class InsectWallEnemy : Enemy
         isActive = true;
         isAlive = true;
         hasAttacked = false;
-        shouldAttack = false; 
+        shouldAttack = false;
 
     }
 
-    // Update is called once per frame
-    void Update()
+
+    void FixedUpdate()
     {
         if (!isActive)
             return;
@@ -159,9 +159,9 @@ public class InsectWallEnemy : Enemy
         {
             if (!hasAttacked)
                 currentVelocity = HandleLeapAttack();
-            currentVelocity.y += leapGravity * Time.deltaTime; 
+            currentVelocity.y += leapGravity * Time.deltaTime;
 
-            transform.rotation = Quaternion.LookRotation(currentVelocity.normalized);  
+            transform.rotation = Quaternion.LookRotation(currentVelocity.normalized);
 
             if (animator != null)
                 animator.enabled = false;
@@ -201,6 +201,81 @@ public class InsectWallEnemy : Enemy
         //Debug.DrawLine(transform.position, transform.position + transform.right * raycastDistance, Color.red);
         //Debug.DrawLine(transform.position, transform.position + -transform.right * raycastDistance, Color.red);
     }
+
+
+
+
+
+    //// Update is called once per frame
+    //void Update()
+    //{
+    //    if (!isActive)
+    //        return;
+
+    //    if (!isAlive && gameObject != null)
+    //    {
+    //        isActive = false;
+    //        Destroy(gameObject);
+    //        return;
+    //    }
+
+    //    //run down timer when in range
+    //    if (!shouldCatchUp && !shouldAttack)
+    //    {
+    //        attackWaitTime -= Time.deltaTime;
+    //    }
+    //    if (attackWaitTime < 0)
+    //        shouldAttack = true;
+
+    //    //Debug.Log("ATTACK TIME: " + attackWaitTime);
+
+    //    //normal normal movement 
+    //    if (shouldAttack)
+    //    {
+    //        if (!hasAttacked)
+    //            currentVelocity = HandleLeapAttack();
+    //        currentVelocity.y += leapGravity * Time.deltaTime; 
+
+    //        transform.rotation = Quaternion.LookRotation(currentVelocity.normalized);  
+
+    //        if (animator != null)
+    //            animator.enabled = false;
+    //    }
+    //    else
+    //    {
+    //        RaycastHit[] hitTargets = Physics.SphereCastAll(transform.position, boidDetectionRadius, transform.up);
+    //        List<GameObject> otherBoids = new List<GameObject>();
+    //        foreach (RaycastHit target in hitTargets)
+    //        {
+    //            GameObject targetObject = target.collider.gameObject;
+    //            //Include all bugs that arent in the middle of attacking 
+    //            if (targetObject.TryGetComponent<InsectWallEnemy>(out InsectWallEnemy enemy))
+    //            {
+    //                if (!enemy.IsAttacking())
+    //                    otherBoids.Add(targetObject);
+    //            }
+    //        }
+
+    //        Vector3 seperationVector = BoidSeperation(otherBoids);
+    //        //Vector3 alignmentVector = BoidAlignment(otherBoids); 
+    //        //currentVelocity = HandleWallMovement() + seperationVector + alignmentVector;
+
+
+    //        currentVelocity = HandleWallMovement() + seperationVector;
+    //        //Debug.Log("alignment: " + alignmentVector);
+    //    }
+
+    //    transform.position += currentVelocity * Time.deltaTime;
+
+    //    if (hasReachedTheEdge())
+    //        isAlive = false;
+
+    //    Debug.DrawLine(transform.position, wallFollowPoint, Color.red);
+    //    Debug.DrawLine(transform.position, worldFollowPoint, Color.yellow);
+
+    //    //Debug.DrawLine(transform.position, transform.position + transform.right * raycastDistance, Color.red);
+    //    //Debug.DrawLine(transform.position, transform.position + -transform.right * raycastDistance, Color.red);
+    //}
 
     private Vector3 BoidSeperation(List<GameObject> boids)
     {

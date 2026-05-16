@@ -88,7 +88,7 @@ public class SwordFishEnemy : Enemy
 
 
     //Not bad at alll 
-    void Update()
+    void FixedUpdate()
     {
 
         //Ugly clean up but for now it works, should make it better thanks 21/4 
@@ -134,6 +134,55 @@ public class SwordFishEnemy : Enemy
         Debug.DrawLine(transform.position, transform.position + currentVelocity.normalized * 5f, Color.yellow);
         Debug.DrawLine(transform.position, currentTarget, Color.red);
     }
+
+
+    ////Not bad at alll 
+    //void Update()
+    //{
+
+    //    //Ugly clean up but for now it works, should make it better thanks 21/4 
+    //    if (!isActive)
+    //        return;
+
+    //    if (!isAlive && gameObject != null)
+    //    {
+    //        isActive = false;
+    //        Destroy(gameObject);
+    //        return;
+    //    }
+
+    //    //what is this code bruh needa change this 
+    //    Vector3 rotatedOffset = shipTransform.TransformDirection(followOffsetLocalDirection);
+    //    followPoint = shipTransform.position + rotatedOffset;
+    //    followPoint.y += followPointYOffset;
+
+    //    if (currentNumHops + 1 < numOfHops)
+    //    {
+    //        Vector3 directionToTarget = (followPoint - transform.position).normalized;
+    //        currentVelocity = Vector3.Lerp(currentVelocity.normalized, directionToTarget, steeringSensitivity * Time.deltaTime) * currentVelocity.magnitude;
+    //    }
+
+    //    currentVelocity.y += gravityY * Time.deltaTime;
+    //    transform.position += currentVelocity * Time.deltaTime;
+
+    //    if (currentNumHops + 1 < numOfHops)
+    //    {
+    //        if (currentVelocity.sqrMagnitude > 0.1f)
+    //        {
+    //            Quaternion targetRotation = Quaternion.LookRotation(currentVelocity.normalized, Vector3.up);
+    //            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, 10f * Time.deltaTime);
+    //        }
+    //    }
+    //    else
+    //    {
+    //        transform.rotation = Quaternion.LookRotation(currentVelocity.normalized);
+
+    //    }
+
+
+    //    Debug.DrawLine(transform.position, transform.position + currentVelocity.normalized * 5f, Color.yellow);
+    //    Debug.DrawLine(transform.position, currentTarget, Color.red);
+    //}
 
     public void CalculateNextTargetPoint()
     {
