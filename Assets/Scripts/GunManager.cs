@@ -4,7 +4,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public enum GUNTYPE {
+public enum GUNTYPE
+{
     M1911,
     AK47,
     NUM_TYPE
@@ -14,7 +15,7 @@ public enum GUNTYPE {
 public class GunTypeContainer
 {
     public GunData gunData;
-    public GameObject model;
+    public GameObject container;
 }
 
 public class GunManager : MonoBehaviour
@@ -22,201 +23,143 @@ public class GunManager : MonoBehaviour
 
     [SerializeField] private GameObject DEBUG_GunMuzzleFlash;
 
-
+    [Header("References")]
     [SerializeField] private LayerMask enemyLayerMask;
     [SerializeField] private TrailRenderer bulletTrailPrefab;
-    [SerializeField] private GUNTYPE startingType; 
+    [SerializeField] private GUNTYPE startingType;
 
-
+    [Header("Gun Settings")]
     [SerializeField] private float trailSpeed = 15;
-
-    [SerializeField] private float gunPositionLerpFactor;
-    [SerializeField] private float gunRotationLerpFactor;
-
     [SerializeField] private float shootRaycastDistance = 80f;
     [SerializeField] private float autoReloadTime = 0.3f;
+
+    [Header("Gun Model Settings")]
+    [SerializeField] private float gunPositionLerpFactor;
+    [SerializeField] private float gunRotationLerpFactor;
+    [SerializeField] private float gunRecoilStrength;
+
 
     [SerializeField] private List<GunTypeContainer> containerList;
 
 
-    [SerializeField] private bool DEBUG_disableGunModel; 
+    [SerializeField] private bool DEBUG_disableGunModel;
 
-    public static Action<int, int> onAmmoCountChanged; 
+    public static Action<int, int> onAmmoCountChanged;
 
     private GunTypeContainer currentGunContainer;
     private int currentGunAmmo;
 
-    private Transform gunPlayerTransform; 
-    //private Vector3 gunTargetPosition; 
-    private Vector3 gunFacingDirection;
+    private Transform gunPlayerTransform;
 
-    //I think i shld just create the 3d mouse pos here instead of from the camera controller 
-    private Vector3 worldMousePos;
     private Vector2 screenMousePos;
 
     private Transform currentFirePoint;
+    private Transform currentGunModel; 
+    private Transform cameraTransformRef;
 
     private bool firedGun;
     private bool isReloading;
     private bool isInShootingMode = false;
-    private bool lerpGunPosition = true; 
+    private bool lerpGunPosition = true;
     private IEnumerator fireRateCoroutine = null;
 
-    
+
+    private Vector3 currentGunPosition;
 
     private float fireRateTimer = 0;
 
-    private SHIPMODE referenceShipMode; 
+    private SHIPMODE referenceShipMode;
 
     void Awake()
     {
-
         gunPlayerTransform = GameObject.FindGameObjectWithTag("GunPoint").transform;
         ChangeGun(startingType);
 
         firedGun = false;
         isReloading = false;
-
-
         onAmmoCountChanged?.Invoke(currentGunAmmo, currentGunContainer.gunData.magazineAmmo);
-
-
     }
 
     private void OnEnable()
     {
         PlayerInputManager.onLeftMouseHold += ShootWeapon;
-        CameraController.onFirstPersonCameraRotate += ReadCameraTransform;
-        //PlayerMovement.onGunPlaceholderMove += HandleGunTargetPosition;
-
+        CameraController.onCameraTransformChanged += ReadCameraTransform;
         Ship.onShipChangedMode += HandleWeaponShipMode;
-
-        //bad way but will work for now 
-        CameraController.onMouseMoved += SetScreenMousePos; 
-        CameraController.onMouseMoved3DPos += Set3DMousePos;
+        CameraController.onMouseMoved += SetScreenMousePos;
     }
 
     private void OnDisable()
     {
         PlayerInputManager.onLeftMouseHold -= ShootWeapon;
-        CameraController.onFirstPersonCameraRotate -= ReadCameraTransform;
+        CameraController.onCameraTransformChanged -= ReadCameraTransform;
         Ship.onShipChangedMode -= HandleWeaponShipMode;
-
         CameraController.onMouseMoved -= SetScreenMousePos;
-        CameraController.onMouseMoved3DPos -= Set3DMousePos;
-
-
-        //PlayerMovement.onGunPlaceholderMove -= HandleGunTargetPosition;
-
-
     }
 
     // Update is called once per frame
-    void Update()   
+    void Update()
     {
-        //currentGunContainer.model.transform.position = gunTargetPosition;
-        //Vector3 lerpVector = Vector3.Lerp(currentGunContainer.model.transform.forward, gunFacingDirection, Time.deltaTime * gunRotationLerpFactor);
-        //currentGunContainer.model.transform.rotation = Quaternion.LookRotation(lerpVector);
-
-
         if (firedGun)
         {
-            fireRateTimer += Time.deltaTime; 
+            fireRateTimer += Time.deltaTime;
             if (fireRateTimer > currentGunContainer.gunData.fireRate)
             {
                 fireRateTimer = 0f;
-                firedGun = false; 
+                firedGun = false;
             }
         }
     }
 
-    //private void LateUpdate()
-    //{
-    //    if (gunPlayerTransform != null)
-    //    {
-    //        //currentGunContainer.model.transform.position = gunPlayerTransform.transform.position;
 
-    //        //Vector3 positionLerp = Vector3.Lerp(currentGunContainer.model.transform.position, 
-    //        //                                    gunPlayerTransform.transform.position, 
-    //        //                                    Time.deltaTime * gunPositionLerpFactor);
+    [SerializeField] private float recoilRecoverySpeed = 10f;
 
-
-    //        Vector3 positionLerp = gunPlayerTransform.transform.position;
-    //        if (lerpGunPosition)
-    //        {
-    //            positionLerp = Vector3.Lerp(currentGunContainer.model.transform.position,
-    //                        gunPlayerTransform.transform.position,
-    //                        Time.deltaTime * gunPositionLerpFactor);
-    //        }
-
-    //        Vector3 lerpVector = Vector3.Lerp(currentGunContainer.model.transform.forward, 
-    //                                          gunFacingDirection, 
-    //                                          Time.deltaTime * gunRotationLerpFactor);
-
-    //        currentGunContainer.model.transform.position = positionLerp;
-    //        currentGunContainer.model.transform.rotation = Quaternion.LookRotation(lerpVector);
-    //    }
-    //}
-
-
+    //newest version 
     private void LateUpdate()
     {
-        if (gunPlayerTransform != null)
-        {
 
-            Vector3 positionLerp = Vector3.Lerp(currentGunContainer.model.transform.position,
-                                        gunPlayerTransform.transform.position,
-                                        Time.deltaTime * gunPositionLerpFactor);
-            Vector3 rotationLerp = Vector3.Lerp(currentGunContainer.model.transform.forward,
-                                              gunFacingDirection,
-                                              Time.deltaTime * gunRotationLerpFactor);
-
-            if (referenceShipMode == SHIPMODE.COMBAT)
-            {
-                positionLerp = gunPlayerTransform.transform.position;
-                //Debug.Log("WORLD MOUSE: " + worldMousePos + " GUNTIP: " + currentFirePoint);
-                //Vector3 lookVector = -(worldMousePos - currentGunContainer.model.transform.position).normalized;
-
-
-                Vector3 lookVector = (worldMousePos - currentFirePoint.position).normalized;
-                rotationLerp = Vector3.RotateTowards(
-                                //-currentGunContainer.model.transform.forward,
-                                currentFirePoint.forward,
-                                lookVector,
-                                gunRotationLerpFactor * Time.deltaTime,
-                                0.0f
-                            );
-
-
-                //rotationLerp = Vector3.Lerp(currentGunContainer.model.transform.forward,
-                //                            lookVector,
-                //                            Time.deltaTime * gunRotationLerpFactor);
-            }
-
-            currentGunContainer.model.transform.position = positionLerp;
-            currentGunContainer.model.transform.rotation = Quaternion.LookRotation(rotationLerp); 
-
-        }
-    }
-
-
-    private void ReadCameraTransform(Vector3 forward, Vector3 right)
-    {
-        if (currentGunContainer == null)
+        if (gunPlayerTransform == null)
             return;
 
-        gunFacingDirection = -forward; 
-        //currentGunContainer.model.transform.rotation = Quaternion.LookRotation(-forward);
+        Vector3 newPosition = Vector3.zero;
+        Vector3 newRotation = Vector3.zero;
+
+        if (isInShootingMode)
+        {
+            newPosition = gunPlayerTransform.transform.position;
+
+            Vector3 cameraForward = cameraTransformRef.forward;
+            Vector3 camPosition = cameraTransformRef.position;
+            Vector3 planePos = camPosition + cameraForward * 20;
+
+            Plane plane = new Plane(cameraForward, planePos);
+            Ray ray = Camera.main.ScreenPointToRay(screenMousePos);
+            if (plane.Raycast(ray, out float distance))
+            {
+                Vector3 worldMousePos = ray.GetPoint(distance);
+                newRotation = (worldMousePos - currentFirePoint.position).normalized;
+            }
+            currentGunModel.transform.rotation = Quaternion.LookRotation(newRotation);
+        }
+        else
+        {
+            newPosition = Vector3.Lerp(currentGunContainer.container.transform.position,
+                                        gunPlayerTransform.transform.position,
+                                        Time.deltaTime * gunPositionLerpFactor);
+            newRotation = Vector3.Lerp(currentGunContainer.container.transform.forward,
+                                              cameraTransformRef.forward,
+                                              Time.deltaTime * gunRotationLerpFactor);
+
+            currentGunContainer.container.transform.rotation = Quaternion.LookRotation(newRotation);
+        }
+
+
+        currentGunContainer.container.transform.position = newPosition;
+        currentGunModel.localPosition = Vector3.Lerp(currentGunModel.localPosition, Vector3.zero, Time.deltaTime * recoilRecoverySpeed);
     }
 
-    private IEnumerator ShootFireRateCoroutine()
+    private void ReadCameraTransform(Transform cameraTransform)
     {
-        if (currentGunContainer == null)
-            yield return null;
-        yield return new WaitForSeconds(currentGunContainer.gunData.fireRate);
-        Debug.Log("FIRED GUN FALSE");
-        firedGun = false;
-        fireRateCoroutine = null;
+        cameraTransformRef = cameraTransform;
     }
 
     private void ShootWeapon()
@@ -230,10 +173,17 @@ public class GunManager : MonoBehaviour
 
         currentGunAmmo -= 1;
         onAmmoCountChanged?.Invoke(currentGunAmmo, currentGunContainer.gunData.magazineAmmo);
+        
+        //This is the way
+        Vector3 worldBackward = -currentGunModel.forward;
+        Vector3 parentLocalBackward = currentGunContainer.container.transform.InverseTransformDirection(worldBackward);
+        Vector3 kickbackPosition = currentGunModel.localPosition + parentLocalBackward * gunRecoilStrength;
+        currentGunModel.localPosition = kickbackPosition;
 
         if (currentGunAmmo <= 0)
             StartCoroutine(ReloadCoroutine());
 
+        HandleBulletTrail();
         GameObject instance = Instantiate(DEBUG_GunMuzzleFlash, currentFirePoint.transform);
         HandleMouseRaycastShoot();
     }
@@ -256,25 +206,6 @@ public class GunManager : MonoBehaviour
         }
     }
 
-    //For intial testing not gona be used 
-    private void HandleHitScanShoot()
-    {
-        int distance = 100;
-        RaycastHit hitInfo;
-        Physics.Raycast(currentFirePoint.position, currentFirePoint.forward, out hitInfo, enemyLayerMask, distance);
-
-        if (hitInfo.collider != null)
-        {
-            Debug.Log("Hit something");
-
-            if (hitInfo.collider.TryGetComponent<Enemy>(out Enemy enemy))
-            {
-                enemy.TakeDamage(currentGunContainer.gunData.damage);
-            }
-        }
-        HandleBulletTrail();
-    }
-
     private IEnumerator ReloadCoroutine()
     {
         isReloading = true;
@@ -285,8 +216,8 @@ public class GunManager : MonoBehaviour
 
     private void HandleBulletTrail()
     {
-        TrailRenderer trail = Instantiate(bulletTrailPrefab, currentFirePoint.position, currentFirePoint.rotation);
-        StartCoroutine(BulletTrailCoroutine(trail, currentFirePoint.forward)); 
+        TrailRenderer trail = Instantiate(bulletTrailPrefab, currentFirePoint.transform);
+        StartCoroutine(BulletTrailCoroutine(trail, currentFirePoint.forward));
     }
 
 
@@ -307,14 +238,16 @@ public class GunManager : MonoBehaviour
     {
         foreach (GunTypeContainer container in containerList)
         {
-            container.model.SetActive(false);
+            container.container.SetActive(false);
             if (container.gunData.type == gunType)
             {
                 if (!DEBUG_disableGunModel)
-                    container.model.SetActive(true);
+                    container.container.SetActive(true);
                 currentGunContainer = container;
                 currentGunAmmo = currentGunContainer.gunData.magazineAmmo;
-                currentFirePoint = container.model.transform.Find("FirePoint");
+                currentGunModel = currentGunContainer.container.transform.Find("Model");
+                currentFirePoint = currentGunModel.Find("FirePoint");
+
             }
         }
 
@@ -339,8 +272,9 @@ public class GunManager : MonoBehaviour
                 onAmmoCountChanged?.Invoke(currentGunAmmo, currentGunContainer.gunData.magazineAmmo);
                 break;
             case SHIPMODE.COMBAT:
+                currentGunPosition = gunPlayerTransform.transform.position;
                 lerpGunPosition = false;
-                isInShootingMode = true; 
+                isInShootingMode = true;
                 break;
         }
 
@@ -349,11 +283,11 @@ public class GunManager : MonoBehaviour
 
     private void SetScreenMousePos(Vector2 mousePos)
     {
-        screenMousePos = mousePos;  
+        screenMousePos = mousePos;
+
     }
 
-    private void Set3DMousePos(Vector3 mousePos3D)
-    {
-        worldMousePos = mousePos3D;
-    }
 }
+
+
+

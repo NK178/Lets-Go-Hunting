@@ -46,7 +46,8 @@ public class PlayerMovement : MonoBehaviour
         Ship.onShipIsCombatMode += ToggleMoveFreeze;
         Ship.onShipIsCombatMode += ToggleRotateFreeze;
         //ShipCombat.onShipLockTransform += ShipLockTransform; 
-        CameraController.onFirstPersonCameraRotate += ReadCameraRotation; 
+        //CameraController.onFirstPersonCameraRotate += ReadCameraRotation; 
+        CameraController.onCameraTransformChanged += ReadCameraTransform; 
 
     }
 
@@ -61,7 +62,8 @@ public class PlayerMovement : MonoBehaviour
         Ship.onShipIsCombatMode -= ToggleMoveFreeze;
         Ship.onShipIsCombatMode -= ToggleRotateFreeze;
         //ShipCombat.onShipLockTransform -= ShipLockTransform;
-        CameraController.onFirstPersonCameraRotate -= ReadCameraRotation;
+        //CameraController.onFirstPersonCameraRotate -= ReadCameraRotation;
+        CameraController.onCameraTransformChanged -= ReadCameraTransform;
     }
 
 
@@ -120,13 +122,25 @@ public class PlayerMovement : MonoBehaviour
         return Quaternion.LookRotation(cameraForward, cameraRight); 
     }
 
-    void ReadCameraRotation(Vector3 camForward, Vector3 camRight)
+    //void ReadCameraRotation(Vector3 camForward, Vector3 camRight)
+    //{
+    //    camForward.y = 0;
+    //    camRight.y = 0;
+    //    cameraForward = camForward; 
+    //    cameraRight = camRight; 
+    //}
+
+    void ReadCameraTransform(Transform cameraTransform)
     {
+        Vector3 camForward = cameraTransform.forward;
+        Vector3 camRight = cameraTransform.right;
         camForward.y = 0;
         camRight.y = 0;
-        cameraForward = camForward; 
-        cameraRight = camRight; 
+        cameraForward = camForward;
+        cameraRight = camRight;
     }
+
+
 
 
     void CalculateJumpVelocity()

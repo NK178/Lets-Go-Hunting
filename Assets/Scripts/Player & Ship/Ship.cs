@@ -107,6 +107,8 @@ public class Ship : MonoBehaviour
         shipWheel.onChangeShipMode += SwitchShipMode;
 
         DriveTrack.onCheckpointSet += HandleCheckPoint;
+        ShipCollision.onCollisionResolve += HandleCollsionResolve;
+        ShipCollision.onCollisionRotateResolve += HandleCollisionRotationResolve;
     }
 
     private void OnDisable()
@@ -116,6 +118,8 @@ public class Ship : MonoBehaviour
         shipWheel.onChangeShipMode -= SwitchShipMode;
 
         DriveTrack.onCheckpointSet -= HandleCheckPoint;
+        ShipCollision.onCollisionResolve -= HandleCollsionResolve;
+        ShipCollision.onCollisionRotateResolve -= HandleCollisionRotationResolve;
 
     }
 
@@ -225,6 +229,27 @@ public class Ship : MonoBehaviour
                                                          shipRudder.transform.eulerAngles.z);
     }
 
+    private void HandleCollsionResolve(Vector3 adjustment)
+    {
+        transform.position += adjustment;
+        propellerPower = 0;
+        currentVelocity = Vector3.zero; 
+    }
+
+
+    private void HandleCollisionRotationResolve(float adjustment)
+    {
+        
+        Vector3 rotationVector = new Vector3(transform.rotation.eulerAngles.x,
+                                             transform.rotation.eulerAngles.y + adjustment,
+                                             transform.rotation.eulerAngles.z);
+
+        Quaternion adjustedRotation = Quaternion.Euler(rotationVector);
+        transform.rotation = adjustedRotation; 
+        rudderForce = 0;
+    }
+
+    
 
     private void SwitchShipMode(SHIPMODE newMode)
     {
@@ -315,6 +340,28 @@ public class Ship : MonoBehaviour
 
     }
 
+    void HandleShipCollision(Transform collider)
+    {
+        BoxCollider boxCollider = collider.GetComponent<BoxCollider>();
+        Vector3 otherCenter = collider.TransformPoint(boxCollider.center);
+        Vector3 halfExtents = Vector3.Scale(boxCollider.size, collider.lossyScale) / 2f;
+        Quaternion otherRotation = collider.rotation;
+
+        LayerMask wallMask = LayerMask.GetMask("Ship");
+        Collider[] hitColliders = Physics.OverlapBox(otherCenter, halfExtents, otherRotation, wallMask);
+
+        if (hitColliders.Length > 0)
+        {
+            Debug.Log("OBB is colliding with " + hitColliders.Length + " objects!");
+        }
+
+
+        //foreach (Collider col in hitColliders)
+        //{
+        //    col.ClosestPoint
+        //}
+    }
+
 
     private void OnTriggerEnter(Collider other)
     {
@@ -323,6 +370,11 @@ public class Ship : MonoBehaviour
             isPlayerOnShip = true;
             other.gameObject.transform.parent = this.transform;
         }
+        //else if (other.gameObject.tag == "Obstacle")
+        //{
+        //    Debug.Log("OBSTACLE");
+        //    HandleShipCollision(other.gameObject.transform);
+        //}    
     }
 
     private void OnTriggerExit(Collider other)
