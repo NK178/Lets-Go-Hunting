@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 
 
@@ -52,7 +53,7 @@ public class Ship : MonoBehaviour
     private float propellerPower;
     private float rudderAngle;
     private float angularPower;
-    private float rudderForce;
+    //private float rudderForce;
     private float shipHealth;
 
     private Vector3 currentVelocity;
@@ -142,6 +143,7 @@ public class Ship : MonoBehaviour
 
         //hmm I just use this for now
         movementVector = Vector3.Lerp(movementVector, transform.forward, Time.deltaTime * 1.2f);
+
         //Debug
         Debug.DrawLine(transform.position, transform.position + transform.forward * 40f, Color.blue);
         Debug.DrawLine(transform.position, transform.position + movementVector * 40f, Color.red);
@@ -220,8 +222,8 @@ public class Ship : MonoBehaviour
 
         float kFactor = 0.05f;
 
-        //simplified rudder formula 
-        rudderForce = propellerPower * angle * kFactor;
+        ////simplified rudder formula 
+        //rudderForce = propellerPower * angle * kFactor;
 
 
         shipRudder.transform.rotation = Quaternion.Euler(shipRudder.transform.eulerAngles.x,
@@ -229,27 +231,30 @@ public class Ship : MonoBehaviour
                                                          shipRudder.transform.eulerAngles.z);
     }
 
-    private void HandleCollsionResolve(Vector3 adjustment)
+
+    //this one is not bad 
+    private void HandleCollsionResolve(Vector3 adjustment, Vector3 direction)
     {
+        float factor = 0.6f;
         transform.position += adjustment;
-        propellerPower = 0;
-        currentVelocity = Vector3.zero; 
+        propellerPower = propellerPower * -factor;
+        currentVelocity = propellerPower * direction;
     }
 
-
+    //Good enough for now 
     private void HandleCollisionRotationResolve(float adjustment)
     {
-        
         Vector3 rotationVector = new Vector3(transform.rotation.eulerAngles.x,
                                              transform.rotation.eulerAngles.y + adjustment,
                                              transform.rotation.eulerAngles.z);
 
         Quaternion adjustedRotation = Quaternion.Euler(rotationVector);
-        transform.rotation = adjustedRotation; 
-        rudderForce = 0;
-    }
+        transform.rotation = adjustedRotation;
 
-    
+        rudderAngle = -Mathf.Sign(adjustment) * shipWheel.GetMaxRudderAngle();
+        Debug.Log("Angular Angle: " + rudderAngle);
+
+    }
 
     private void SwitchShipMode(SHIPMODE newMode)
     {

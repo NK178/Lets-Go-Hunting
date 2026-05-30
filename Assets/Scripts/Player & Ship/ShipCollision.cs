@@ -4,7 +4,7 @@ using UnityEngine;
 public class ShipCollision : MonoBehaviour
 {
 
-    public static Action<Vector3> onCollisionResolve; 
+    public static Action<Vector3,Vector3> onCollisionResolve; 
     public static Action<float> onCollisionRotateResolve; 
 
     [SerializeField] private BoxCollider boxCollider;
@@ -25,17 +25,16 @@ public class ShipCollision : MonoBehaviour
 
     }
 
-    //works but probably an expensive operation, should try to make my own, for now it will work 
+    //Working Version 30/5, using unity's features 
     void HandleShipCollision(Transform collider)
     {
         BoxCollider otherBox = collider.GetComponent<BoxCollider>();
         BoxCollider box = transform.GetComponent<BoxCollider>();
 
-        // We let Unity tell us the direction and exact distance needed to separate them
         Vector3 separationDirection;
         float penetrationDistance;
 
-        // This native function handles all scales, rotations, and box center offsets perfectly
+        //Insanly OP function
         bool isOverlapping = Physics.ComputePenetration(
             box, transform.position, transform.rotation,
             otherBox, collider.position, collider.rotation,
@@ -45,42 +44,30 @@ public class ShipCollision : MonoBehaviour
         if (isOverlapping && penetrationDistance > 0.001f)
         {
             Vector3 worldAdjustment = separationDirection * penetrationDistance;
-            onCollisionResolve.Invoke(worldAdjustment * wallResolveDistFactor);
-
-
-            // 1. Check how parallel the vectors are using Dot Product
-            // -1 means a perfect head-on smash, 0 means a side-swipe
-            float headOnCheck = Vector3.Dot(transform.forward, separationDirection);
-
             Vector3 finalSeparationDirection = separationDirection;
 
-            // 2. If it's a near-perfect head-on collision, give it a tiny side nudge
+            Vector3 resolveVector = worldAdjustment * wallResolveDistFactor;
+
+            float headOnCheck = Vector3.Dot(transform.forward, separationDirection);
             if (headOnCheck < -0.9f)
-            {
-                // Blend a tiny bit of the car's right vector into the push direction 
-                // This forces the cross product to choose a side rather than returning 0
                 finalSeparationDirection = (separationDirection + (transform.right * 0.1f)).normalized;
-            }
 
-            // 3. Now run your cross product safely!
             Vector3 crossResult = Vector3.Cross(transform.forward, finalSeparationDirection);
-            float torqueAdjustment = crossResult.y * wallSteerForce;
-            //Debug.Log("TORQUE: " + torqueAdjustment + "CRS: " + crossResult);
+
+            float angle = Vector3.Angle(transform.forward, -finalSeparationDirection);
+            float maxTurnAngle = 90f;
+
+            //Turn less the further the angle 
+            float torqueFactor = Mathf.Clamp01(1f - (angle / maxTurnAngle));
+            float turnDirection = Mathf.Sign(crossResult.y);
+            float torqueAdjustment = turnDirection * torqueFactor * wallSteerForce;
+
+            //Debug.Log($"ANG: {angle} | FACTOR: {torqueFactor} | TORQUE: {torqueAdjustment}");
+
+            onCollisionResolve.Invoke(resolveVector, finalSeparationDirection);
             onCollisionRotateResolve.Invoke(torqueAdjustment);
-
-
-            //Vector3 crossResult = Vector3.Cross(transform.forward, separationDirection);
-
-            //// 3. Extract the rotation value and scale it by your guiding multiplier
-            //float torqueAdjustment = crossResult.y * wallSteerForce;
-
-            //Debug.Log("TORQUE: " + torqueAdjustment);
-            //// 4. Pass the rotation assist directly to your car controller
-            //// (You can pass this as an event, or apply it to a Rigidbody if using physics)
-            //onCollisionRotateResolve.Invoke(torqueAdjustment);
         }
     }
-
 
     //Seperating Axis fail for some reason, would be nice to make it work 
     //void HandleShipCollision(Transform collider)
@@ -203,7 +190,7 @@ public class ShipCollision : MonoBehaviour
 
         Vector3 worldAdjustment = transform.TransformDirection(adjustment);
 
-        onCollisionResolve.Invoke(worldAdjustment);
+        onCollisionResolve.Invoke(worldAdjustment, worldAdjustment.normalized);
     }
 
     Vector3 GetDominantFace(Vector3 localPoint, Vector3 extents)
