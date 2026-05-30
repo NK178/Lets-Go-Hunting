@@ -1,5 +1,6 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 
 public class UIManager : MonoBehaviour
@@ -12,6 +13,7 @@ public class UIManager : MonoBehaviour
 
     [Header("Ship Health")]
     [SerializeField] private GameObject healthPanel;
+    private Image healthBarImage; 
     private GameObject healthBar;
 
     [SerializeField] private GameObject ammoPanel;
@@ -31,6 +33,7 @@ public class UIManager : MonoBehaviour
     {
 
         healthBar = healthPanel.transform.Find("Health").gameObject;
+        healthBarImage = healthPanel.transform.Find("Health").gameObject.GetComponent<Image>();
         ammoText = ammoPanel.transform.Find("Ammo").gameObject.GetComponent<TMP_Text>();    
         originalHealthSizeDelta = healthBar.GetComponent<RectTransform>().sizeDelta;
         originalCrosshairPosition = crosshair.GetComponent<RectTransform>().position;
@@ -83,25 +86,19 @@ public class UIManager : MonoBehaviour
 
     private void UpdateShipHealthUI(float health, float healthPercentage)
     {
-        RectTransform rect = healthBar.GetComponent<RectTransform>();
-        if (rect != null)
-        {
-            
-            rect.sizeDelta = new Vector2(originalHealthSizeDelta.x * healthPercentage,
-                                         originalHealthSizeDelta.y);
+        //RectTransform rect = healthBar.GetComponent<RectTransform>();
+        //if (rect != null)
+        //{
 
-            Debug.Log("RECT: " + rect.sizeDelta);
-        }
+        //    rect.sizeDelta = new Vector2(originalHealthSizeDelta.x * healthPercentage,
+        //                                 originalHealthSizeDelta.y);
 
+        //    Debug.Log("RECT: " + rect.sizeDelta);
+        //}
+
+        //Trying new method lesgo 
+        healthBarImage.fillAmount = healthPercentage; 
     }
-
-    //private void ToggleUICombatMode(bool condition)
-    //{
-    //    if (!condition)
-    //    {
-    //        crosshair.GetComponent<RectTransform>().position = originalCrosshairPosition;
-    //    }
-    //}
 
 
     private void UpdateAmmoCount(int currentAmmo, int maxAmmo)
