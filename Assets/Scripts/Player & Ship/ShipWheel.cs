@@ -80,24 +80,26 @@ public class ShipWheel : MonoBehaviour
         //Ship.onShipIsCombatMode -= HandleShipInCombat;
     }
 
-
-
-
     // Update is called once per frame
     void Update()
     {
-        //if (isPlayerDriving && !isShipAlive)
-        //{
-        //    isPlayerDriving = !isPlayerDriving;
-        //    onPlayerAtWheel?.Invoke(isPlayerDriving);
-        //}
-    }
 
+    }
 
 
     private void SetShipMode(SHIPMODE shipMode)
     {
         referenceShipMode = shipMode;
+
+        if (shipMode == SHIPMODE.MANUAL_DRIVE)
+        {
+            GameObject player = GameObject.FindGameObjectWithTag("Player");
+            if (player != null)
+            {
+                player.transform.position = playerFixedLocation.position;
+                player.transform.rotation = playerFixedLocation.rotation;
+            }
+        }
     }
 
     private void onPlayerInteractWheel()
@@ -105,38 +107,13 @@ public class ShipWheel : MonoBehaviour
         if (!isPlayerInRange || !isShipAlive)
             return;
 
-        //isPlayerDriving = !isPlayerDriving;
-
-        //SHIPMODE newMode = SHIPMODE.MANUAL_DRIVE;
-        //if (!isPlayerDriving)
-        //    newMode = SHIPMODE.IDLE;
-
         if (referenceShipMode == SHIPMODE.IDLE)
             onChangeShipMode?.Invoke(SHIPMODE.MANUAL_DRIVE);
         else if (referenceShipMode == SHIPMODE.MANUAL_DRIVE)
             onChangeShipMode?.Invoke(SHIPMODE.IDLE);
 
 
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        if (player != null)
-        {
-
-            player.transform.position = playerFixedLocation.position;
-            player.transform.rotation = playerFixedLocation.rotation;
-
-            //player.transform.position = gameObject.transform.position;
-            //player.transform.rotation = gameObject.transform.rotation;
-        }
     }
-
-
-    //private void HandleShipInCombat(bool condition)
-    //{
-    //    if (condition && isPlayerDriving)
-    //    {
-    //        onPlayerInteractWheel();
-    //    }
-    //}
 
     private void HandleShipControls(Vector2 direction)
     {
@@ -146,37 +123,6 @@ public class ShipWheel : MonoBehaviour
         HandleShipPropeller(direction.y);
         HandleShipRudder(direction.x);
     }
-
-
-    ////trying out new way 
-    //private void HandleShipPropeller(float input)
-    //{
-    //    //going ahead 
-    //    if (input > 0)
-    //        currentPropellerAcceleration = propellerAcceleration; 
-    //    else if (input < 0)
-    //        currentPropellerAcceleration = -propellerAcceleration;
-    //    else
-    //        currentPropellerAcceleration = 0f;
-    //}
-
-    ////trying out new way 
-    //private void HandleShipRudder(float input)
-    //{
-    //    //going starboard
-    //    if (input > 0)
-    //    {
-    //        currentRudderTurnAcceleration = rudderTurnAcceleration;
-    //    }
-    //    //going port side 
-    //    else if (input < 0)
-    //    {
-    //        currentRudderTurnAcceleration = -rudderTurnAcceleration;
-    //    }
-    //    else
-    //        currentRudderTurnAcceleration = 0f;
-    //}
-
 
     //trying out new way 
     private void HandleShipPropeller(float input)
@@ -202,8 +148,6 @@ public class ShipWheel : MonoBehaviour
         else
             currentRudderDirection = 0;
     }
-
-
 
     public float GetMaxAheadSpeed()
     {
@@ -283,67 +227,5 @@ public class ShipWheel : MonoBehaviour
     {
         isShipAlive = false;
     }
-
-
-    ////OLD
-    //public float GetPropellerAccelerationOLD()
-    //{
-    //    return currentPropellerAcceleration;
-    //}
-
-    //public float GetRudderTurnAccelerationOLD()
-    //{
-    //    return currentRudderTurnAcceleration;
-    //}
-    ////
-
-
-    //private void HandleShipPropeller(float input)
-    //{
-    //    //going ahead 
-    //    if (input > 0)
-    //    {
-    //        currentPropellerSpeed += propellerAcceleration * Time.deltaTime;
-    //    }
-    //    else if (input < 0)
-    //    {
-    //        currentPropellerSpeed -= propellerAcceleration * Time.deltaTime;
-    //    }
-
-    //    //Hmm i shouldnt do this actually hmmm 
-    //    //forward postive backwards negative 
-    //    if (currentPropellerSpeed > maxAheadPropellerSpeed)
-    //        currentPropellerSpeed = maxAheadPropellerSpeed;
-    //    else if (currentPropellerSpeed < maxAsternPropellerSpeed)
-    //        currentPropellerSpeed = maxAsternPropellerSpeed;
-
-    //    onPropellerActive?.Invoke(currentPropellerSpeed);
-    //}
-
-    //private void HandleShipRudder(float input)
-    //{
-    //    //going starboard
-    //    if (input > 0)
-    //    {
-    //        currentRudderAngle += rudderTurnSpeed * Time.deltaTime;
-    //    }
-    //    //going port side 
-    //    else if (input < 0)
-    //    {
-    //        currentRudderAngle -= rudderTurnSpeed * Time.deltaTime;
-    //    }
-
-    //    if (Mathf.Abs(currentRudderAngle) >= maxRudderAngle)
-    //    {
-    //        if (currentRudderAngle < 0)
-    //            currentRudderAngle = -maxRudderAngle;
-    //        else
-    //            currentRudderAngle = maxRudderAngle;
-    //    }
-
-    //    onRudderActive?.Invoke(currentRudderAngle);
-
-    //}
-
 
 }

@@ -48,7 +48,8 @@ public class Ship : MonoBehaviour
     public static Action onShipDeath;
     public static Action<float, float> onShipHealthChanged;
     public static Action<bool> onShipIsCombatMode;
-    public static Action<SHIPMODE> onShipChangedMode; 
+    public static Action<SHIPMODE> onShipChangedMode;
+
 
     private float propellerPower;
     private float rudderAngle;
@@ -262,8 +263,8 @@ public class Ship : MonoBehaviour
             return;
 
         currentMode = newMode;
-
         onShipChangedMode?.Invoke(newMode);
+
     }
 
 
@@ -312,16 +313,6 @@ public class Ship : MonoBehaviour
             if (newMode == SHIPMODE.IDLE)
             {
                 SwitchShipMode(SHIPMODE.IDLE);
-
-
-                ////Hmm slight issue but eh will fix 
-                //GameObject player = GameObject.FindGameObjectWithTag("Player");
-                //if (player != null)
-                //{
-                //    player.transform.position = shipWheel.gameObject.transform.position;
-                //    player.transform.rotation = shipWheel.gameObject.transform.rotation;
-                //}
-
 
             }
             else if (newMode == SHIPMODE.MANUAL_DRIVE)

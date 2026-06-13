@@ -22,40 +22,55 @@ public class CameraCatagory {
 public class CameraController : MonoBehaviour
 {
 
+    [SerializeField] private Transform shipCameraTarget; 
     [SerializeField] private List<CameraCatagory> cameraList;
 
     private CameraCatagory activeCameraCat; 
     public static Action<Vector3, Vector3> onFirstPersonCameraRotate;
     public static Action<Transform> onCameraTransformChanged;
     public static Action<Vector2> onMouseMoved;
+
+   
     
 
     private bool cameraLockRotate = false;
 
-    private Transform shipShootPointTransform; 
+    private Transform shipShootPointTransform;
+
+    private float orbitalCameraDefaultVerticalValue = 0f;
 
     void Awake()
     {
 
         ChangeCamera(CAMERATYPE.FIRST_PERSON);
         LockCursor(true);
+
+        //quick set up 
+        foreach (CameraCatagory category in cameraList)
+        {
+            if (category.type == CAMERATYPE.SHIP_CAMERA)
+            {
+                if (category.camera.TryGetComponent<CinemachineOrbitalFollow>(out CinemachineOrbitalFollow component))
+                {
+                    orbitalCameraDefaultVerticalValue = component.VerticalAxis.Value;
+                    break; 
+                }
+            }
+        }
     }
 
 
     private void OnEnable()
     {
-        //ShipWheel.onPlayerAtWheel += ChangeToShipCamera;
         Ship.onShipIsCombatMode += ToggleFreezeRotation;
 
         ShipCombat.onShipLockTransform += TrackShipRotate;
 
-        Ship.onShipChangedMode += HandleCameraShipMode; 
-
+        Ship.onShipChangedMode += HandleCameraShipMode;
     }
 
     private void OnDisable()
     {
-        //ShipWheel.onPlayerAtWheel -= ChangeToShipCamera;
         Ship.onShipIsCombatMode -= ToggleFreezeRotation;
         ShipCombat.onShipLockTransform -= TrackShipRotate;
 
@@ -127,18 +142,6 @@ public class CameraController : MonoBehaviour
         shipShootPointTransform = transform;    
     }
 
-    void ChangeToShipCamera(bool condition)
-    {
-        if (condition)
-        {
-            ChangeCamera(CAMERATYPE.SHIP_CAMERA);
-        }
-        else if (!condition)
-        {
-            ChangeCamera(CAMERATYPE.FIRST_PERSON);
-        }
-    }
-
     void ToggleFreezeRotation(bool condition)
     {
         cameraLockRotate = condition;
@@ -177,9 +180,32 @@ public class CameraController : MonoBehaviour
             {
                 activeCameraCat = camCategory;
                 activeCameraCat.camera.gameObject.SetActive(true);
+                HandleChangedCameraProperties(camCategory);
             }
             else
                 camCategory.camera.gameObject.SetActive(false);
+        }
+
+
+    }
+
+    void HandleChangedCameraProperties(CameraCatagory camCatagory)
+    {
+
+        CAMERATYPE camType = camCatagory.type; 
+
+        if (camType == CAMERATYPE.SHIP_CAMERA)
+        {
+            CinemachineOrbitalFollow orbitalFollow = activeCameraCat.camera.gameObject.GetComponent<CinemachineOrbitalFollow>();
+            orbitalFollow.HorizontalAxis.Value = 0f;
+            orbitalFollow.VerticalAxis.Value = orbitalCameraDefaultVerticalValue;
+        }
+        else if (camType == CAMERATYPE.FIRST_PERSON)
+        {
+            float panAngle = Mathf.Atan2(shipCameraTarget.forward.x, shipCameraTarget.forward.z) * Mathf.Rad2Deg;
+            CinemachinePanTilt panTilt = activeCameraCat.camera.gameObject.GetComponent<CinemachinePanTilt>();
+            panTilt.PanAxis.Value = panAngle;
+            panTilt.TiltAxis.Value = 0;
         }
     }
 
@@ -194,7 +220,8 @@ public class CameraController : MonoBehaviour
         {
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = false;
-        }
+        }   
 
     }
+
 }

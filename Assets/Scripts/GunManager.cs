@@ -60,7 +60,6 @@ public class GunManager : MonoBehaviour
     private bool firedGun;
     private bool isReloading;
     private bool isInShootingMode = false;
-    private bool lerpGunPosition = true;
     private IEnumerator fireRateCoroutine = null;
 
 
@@ -113,7 +112,51 @@ public class GunManager : MonoBehaviour
 
     [SerializeField] private float recoilRecoverySpeed = 10f;
 
-    //newest version 
+    ////newest version 
+    //private void LateUpdate()
+    //{
+
+    //    if (gunPlayerTransform == null)
+    //        return;
+
+    //    Vector3 newPosition = Vector3.zero;
+    //    Vector3 newRotation = Vector3.zero;
+
+    //    if (isInShootingMode)
+    //    {
+    //        newPosition = gunPlayerTransform.transform.position;
+
+    //        Vector3 cameraForward = cameraTransformRef.forward;
+    //        Vector3 camPosition = cameraTransformRef.position;
+    //        Vector3 planePos = camPosition + cameraForward * 20;
+
+    //        Plane plane = new Plane(cameraForward, planePos);
+    //        Ray ray = Camera.main.ScreenPointToRay(screenMousePos);
+    //        if (plane.Raycast(ray, out float distance))
+    //        {
+    //            Vector3 worldMousePos = ray.GetPoint(distance);
+    //            newRotation = (worldMousePos - currentFirePoint.position).normalized;
+    //        }
+    //        currentGunModel.transform.rotation = Quaternion.LookRotation(newRotation);
+    //        currentGunModel.localPosition = Vector3.Lerp(currentGunModel.localPosition, Vector3.zero, Time.deltaTime * recoilRecoverySpeed);
+    //    }
+    //    else
+    //    {
+    //        newPosition = Vector3.Lerp(currentGunContainer.container.transform.position,
+    //                                    gunPlayerTransform.transform.position,
+    //                                    Time.deltaTime * gunPositionLerpFactor);
+    //        newRotation = Vector3.Lerp(currentGunContainer.container.transform.forward,
+    //                                          cameraTransformRef.forward,
+    //                                          Time.deltaTime * gunRotationLerpFactor);
+
+    //        currentGunContainer.container.transform.rotation = Quaternion.LookRotation(newRotation);
+    //    }
+
+
+    //    currentGunContainer.container.transform.position = newPosition;
+    //    currentGunModel.localPosition = Vector3.Lerp(currentGunModel.localPosition, Vector3.zero, Time.deltaTime * recoilRecoverySpeed);
+    //}
+
     private void LateUpdate()
     {
 
@@ -123,7 +166,7 @@ public class GunManager : MonoBehaviour
         Vector3 newPosition = Vector3.zero;
         Vector3 newRotation = Vector3.zero;
 
-        if (isInShootingMode)
+        if (referenceShipMode == SHIPMODE.COMBAT)
         {
             newPosition = gunPlayerTransform.transform.position;
 
@@ -139,22 +182,44 @@ public class GunManager : MonoBehaviour
                 newRotation = (worldMousePos - currentFirePoint.position).normalized;
             }
             currentGunModel.transform.rotation = Quaternion.LookRotation(newRotation);
+            currentGunModel.localPosition = Vector3.Lerp(currentGunModel.localPosition, Vector3.zero, Time.deltaTime * recoilRecoverySpeed);
         }
-        else
+        else if (referenceShipMode == SHIPMODE.MANUAL_DRIVE)
+        {
+            newPosition = gunPlayerTransform.transform.position;
+            //newRotation = cameraTransformRef.forward;
+
+            //float panAngle = Mathf.Atan2(cameraTransformRef.forward.x, cameraTransformRef.forward.z) * Mathf.Rad2Deg;
+            //Quaternion currentRotation = currentGunContainer.container.transform.rotation;
+            //newRotation = new Vector3(currentRotation.eulerAngles.x, panAngle, currentRotation.eulerAngles.z);
+
+            //currentGunContainer.container.transform.position = newPosition;
+            //currentGunContainer.container.transform.rotation = Quaternion.LookRotation(newRotation);
+
+        }
+        else if (referenceShipMode == SHIPMODE.IDLE)
         {
             newPosition = Vector3.Lerp(currentGunContainer.container.transform.position,
                                         gunPlayerTransform.transform.position,
                                         Time.deltaTime * gunPositionLerpFactor);
-            newRotation = Vector3.Lerp(currentGunContainer.container.transform.forward,
-                                              cameraTransformRef.forward,
-                                              Time.deltaTime * gunRotationLerpFactor);
 
-            currentGunContainer.container.transform.rotation = Quaternion.LookRotation(newRotation);
+            Quaternion slerpRotation = Quaternion.Slerp(
+                                    currentGunContainer.container.transform.rotation,
+                                    cameraTransformRef.rotation, // Match the exact camera rotation matrix
+                                    Time.deltaTime * gunRotationLerpFactor
+                                );
+
+            currentGunContainer.container.transform.rotation = slerpRotation;
+            currentGunModel.localRotation = Quaternion.identity;
         }
 
 
         currentGunContainer.container.transform.position = newPosition;
-        currentGunModel.localPosition = Vector3.Lerp(currentGunModel.localPosition, Vector3.zero, Time.deltaTime * recoilRecoverySpeed);
+
+
+        Debug.Log("MODEL ROT: " + currentGunModel.transform.rotation);
+
+        //currentGunModel.localPosition = Vector3.Lerp(currentGunModel.localPosition, Vector3.zero, Time.deltaTime * recoilRecoverySpeed);
     }
 
     private void ReadCameraTransform(Transform cameraTransform)
@@ -261,19 +326,24 @@ public class GunManager : MonoBehaviour
         {
             case SHIPMODE.IDLE:
                 isInShootingMode = false;
-                lerpGunPosition = true;
                 currentGunAmmo = currentGunContainer.gunData.magazineAmmo;
                 onAmmoCountChanged?.Invoke(currentGunAmmo, currentGunContainer.gunData.magazineAmmo);
+
+                currentGunContainer.container.transform.rotation = Quaternion.LookRotation(cameraTransformRef.forward);
+                currentGunModel.transform.rotation = Quaternion.Euler(new Vector3(0, 0, 0));
+                //currentGunModel.transform.position = new Vector3(0, 0, 0);
+
+                Debug.Log("CURRENT GUN MODEL ROT: " + currentGunModel.transform.rotation);
+
+
                 break;
             case SHIPMODE.MANUAL_DRIVE:
-                lerpGunPosition = true;
                 isInShootingMode = false;
                 currentGunAmmo = currentGunContainer.gunData.magazineAmmo;
                 onAmmoCountChanged?.Invoke(currentGunAmmo, currentGunContainer.gunData.magazineAmmo);
                 break;
             case SHIPMODE.COMBAT:
                 currentGunPosition = gunPlayerTransform.transform.position;
-                lerpGunPosition = false;
                 isInShootingMode = true;
                 break;
         }
