@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 
@@ -20,6 +21,13 @@ public class SwordFishEnemy : Enemy
     [SerializeField] private float jumpDistToTargetPercentage;
     [SerializeField] private float followPointYOffset;
     [SerializeField] private float steeringSensitivity;
+    [Range(0f, 10f)] 
+    [SerializeField] private float currentTargetWidthDeviation; 
+
+    [Header("Others")]
+    [SerializeField] private GameObject sparkPrefab; 
+    [SerializeField] private GameObject sparkPoint;
+
 
     private float desiredFlightTime;
 
@@ -37,24 +45,11 @@ public class SwordFishEnemy : Enemy
     private float flightTimeIncrement;
 
 
-    //[SerializeField] private float flightTime;
-    //[SerializeField] private float maxTargetDistPercentage;
-    //[SerializeField] private float minTargetDistPercentage;
-
-    //[SerializeField] private float followPointOffset;
-
-    //private float distToTargetPercentage;
-    //private Vector3 startPosition;
-
-    //new stuff 
-    //[SerializeField] private Vector3 followPointOffset;
-
-    //none dynamic rb way 
-
-
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    protected override void Start()
     {
+        base.Start();
+
+        Debug.Log("CONSTRUCTING");
         numOfHops = Random.Range(numOfHopsMin, numOfHopsMax + 1);
         currentNumHops = 0;
 
@@ -66,7 +61,7 @@ public class SwordFishEnemy : Enemy
             {
                 Debug.Log("END TARGET: " + pointName);
                 endTarget = targetPt.transform;
-                break; 
+                break;
             }
         }
 
@@ -80,12 +75,51 @@ public class SwordFishEnemy : Enemy
             return;
         }
 
-        isActive = true;
-        isAlive = true;
+        //currentHealth = enemyData.maxHealth;
+        //isActive = true;
+        //isAlive = true;
         desiredFlightTime = minFlightTime;
         flightTimeIncrement = 1.0f / (float)numOfHops;
     }
 
+
+
+    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    //void Start()
+    //{
+    //    numOfHops = Random.Range(numOfHopsMin, numOfHopsMax + 1);
+    //    currentNumHops = 0;
+
+    //    GameObject[] shipTargetPoints = GameObject.FindGameObjectsWithTag("ShipPoint");
+    //    foreach (GameObject targetPt in shipTargetPoints)
+    //    {
+    //        string pointName = targetPt.name;
+    //        if (pointName.Contains(shipTargetSideName))
+    //        {
+    //            Debug.Log("END TARGET: " + pointName);
+    //            endTarget = targetPt.transform;
+    //            break; 
+    //        }
+    //    }
+
+    //    //endTarget = GameObject.FindGameObjectWithTag(shipTargetPointName).transform;
+    //    shipTransform = GameObject.FindGameObjectWithTag("Ship").transform;
+    //    shipRef = shipTransform.GetComponent<Ship>();
+
+    //    if (endTarget == null)
+    //    {
+    //        Debug.Log("INVALID TARGET POINT");
+    //        return;
+    //    }
+
+    //    currentHealth = enemyData.maxHealth;
+    //    isActive = true;
+    //    isAlive = true;
+    //    desiredFlightTime = minFlightTime;
+    //    flightTimeIncrement = 1.0f / (float)numOfHops;
+    //}
+
+    float targetDeviation = 0f;
 
     //Not bad at alll 
     void FixedUpdate()
@@ -107,12 +141,14 @@ public class SwordFishEnemy : Enemy
         followPoint = shipTransform.position + rotatedOffset;
         followPoint.y += followPointYOffset;
 
+
         if (currentNumHops + 1 < numOfHops)
         {
-            Vector3 directionToTarget = (followPoint - transform.position).normalized;
+            Vector3 targetPosition = followPoint + shipTransform.right * targetDeviation; 
+            Vector3 directionToTarget = (targetPosition - transform.position).normalized;
+
             currentVelocity = Vector3.Lerp(currentVelocity.normalized, directionToTarget, steeringSensitivity * Time.deltaTime) * currentVelocity.magnitude;
         }
-
         currentVelocity.y += gravityY * Time.deltaTime;
         transform.position += currentVelocity * Time.deltaTime;
 
@@ -130,9 +166,9 @@ public class SwordFishEnemy : Enemy
 
         }
 
-
         Debug.DrawLine(transform.position, transform.position + currentVelocity.normalized * 5f, Color.yellow);
         Debug.DrawLine(transform.position, currentTarget, Color.red);
+        Debug.DrawLine(transform.position, followPoint, Color.blue);
     }
 
 
@@ -198,12 +234,21 @@ public class SwordFishEnemy : Enemy
         {
             Debug.Log("JUMPING TOWARDS SHIP");
             currentTarget = endTarget.position;
+
+            //add effect here 
+
+            StartCoroutine(TargettingSparkEffectCoroutine(0.3f));
         }
         else
         {
             float distance = (transform.position - followPoint).magnitude;
             currentTarget = Vector3.MoveTowards(transform.position, followPoint, distance * jumpDistToTargetPercentage);
             currentTarget.y = followPoint.y;
+
+            //For deviation in movement 
+            //float randomDeviation = Random.Range(-currentTargetWidthDeviation, currentTargetWidthDeviation);
+            targetDeviation = Random.Range(-currentTargetWidthDeviation, currentTargetWidthDeviation);
+            currentTarget += shipTransform.right * targetDeviation;
         }
 
 
@@ -240,17 +285,19 @@ public class SwordFishEnemy : Enemy
     }
 
 
+    private IEnumerator TargettingSparkEffectCoroutine(float time)
+    {
+        yield return new WaitForSeconds(time);
+        GameObject spark = Instantiate(sparkPrefab, sparkPoint.transform.position, sparkPoint.transform.rotation);
+    }
+
+
     private void OnTriggerEnter(Collider other)
     {
 
         //This might not be the greatest bounce back method but oh well 
         if (other.gameObject.CompareTag("Water"))
         {
-            //if (currentNumHops == numOfHops)
-            //    return; 
-
-            //TEMP 
-            //GetComponent<Rigidbody>().linearVelocity = Vector3.zero;
             CalculateNextTargetPoint();
         }
 
@@ -266,8 +313,9 @@ public class SwordFishEnemy : Enemy
                 Destroy(gameObject);
             }
         }
-
     }
+
+
 
 
 

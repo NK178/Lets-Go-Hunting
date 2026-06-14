@@ -33,6 +33,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 3800939582718779984}
+  - {fileID: 7305103517195240972}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!54 &7778383862890039647
@@ -98,17 +99,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SwordFishEnemy
   enemyData: {fileID: 11400000, guid: 7cda733eae993fa4a94e211371e22370, type: 2}
-  gravityY: -9.81
-  maxFlightTime: 4
-  minFlightTime: 2
+  animator: {fileID: 0}
+  damageColour: {r: 0.8037735, g: 0.047013126, b: 0.047013126, a: 0}
+  gravityY: -17
+  maxFlightTime: 2.5
+  minFlightTime: 1.5
   numOfHopsMax: 5
   numOfHopsMin: 3
   shipTargetPointName: ShipPoint
   shipTargetSideName: Starboard
-  followOffsetLocalDirection: {x: 45, y: 0, z: 15}
+  followOffsetLocalDirection: {x: 45, y: 0, z: 20}
   jumpDistToTargetPercentage: 0.3
   followPointYOffset: 10
-  steeringSensitivity: 0.5
+  steeringSensitivity: 0.2
+  currentTargetWidthDeviation: 6
+  sparkPrefab: {fileID: 1488617160056061884, guid: ef0d904a36f6eaa43a5c5f1e89b46502, type: 3}
+  sparkPoint: {fileID: 7593443370945992091}
 --- !u!1 &3267324339240137136
 GameObject:
   m_ObjectHideFlags: 0
@@ -199,3 +205,34 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!1 &7593443370945992091
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7305103517195240972}
+  m_Layer: 6
+  m_Name: SparkPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7305103517195240972
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7593443370945992091}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 3.07}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6729129266485396430}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

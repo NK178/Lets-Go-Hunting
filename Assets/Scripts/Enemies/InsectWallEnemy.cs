@@ -63,8 +63,9 @@ public class InsectWallEnemy : Enemy
 
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    protected override void Start()
     {
+        base.Start();
         //double raycast to find the wall 
         bool wallFound = false;
         bool isRightWall = false;
@@ -124,8 +125,8 @@ public class InsectWallEnemy : Enemy
         shipTransform = GameObject.FindGameObjectWithTag("Ship").transform;
         shipRef = shipTransform.GetComponent<Ship>();
 
-        isActive = true;
-        isAlive = true;
+        //isActive = true;
+        //isAlive = true;
         hasAttacked = false;
         shouldAttack = false;
 

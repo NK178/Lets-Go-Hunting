@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: SwordFish EnemyData
   m_EditorClassIdentifier: Assembly-CSharp::EnemyData
   type: 0
-  maxHealth: 50
+  maxHealth: 75
   damage: 20
   points: 100

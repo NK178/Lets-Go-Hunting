@@ -1,5 +1,4 @@
 using System.Collections;
-using Unity.VisualScripting;
 using UnityEngine;
 
 // 5/7 I can make this multi dimensional, spawn both boss and wave stuff 
@@ -152,7 +151,6 @@ public class SpawnerWaveFunction : BaseWaveFunction
     {
         while (isCoroutineRunning)
         {
-            Debug.Log("RUNNING COROUTINE");
             yield return new WaitForSeconds(waveInterval);
 
 

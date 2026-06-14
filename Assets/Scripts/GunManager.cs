@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -38,7 +39,13 @@ public class GunManager : MonoBehaviour
     [SerializeField] private float gunRotationLerpFactor;
     [SerializeField] private float gunRecoilStrength;
 
+    //I just put here for testing, idk if should be here or not 
+    [Header("Impluse")]
+    [SerializeField] private CinemachineImpulseSource impluseSource;
+    
 
+
+    [Header("Guns")]
     [SerializeField] private List<GunTypeContainer> containerList;
 
 
@@ -217,7 +224,7 @@ public class GunManager : MonoBehaviour
         currentGunContainer.container.transform.position = newPosition;
 
 
-        Debug.Log("MODEL ROT: " + currentGunModel.transform.rotation);
+        //Debug.Log("MODEL ROT: " + currentGunModel.transform.rotation);
 
         //currentGunModel.localPosition = Vector3.Lerp(currentGunModel.localPosition, Vector3.zero, Time.deltaTime * recoilRecoverySpeed);
     }
@@ -261,12 +268,13 @@ public class GunManager : MonoBehaviour
 
         if (Physics.Raycast(ray, out hit, shootRaycastDistance, enemyLayerMask))
         {
-            Debug.Log("Hit: " + hit.collider.name);
+            //Debug.Log("Hit: " + hit.collider.name);
 
             Enemy enemyRef = hit.collider.gameObject.GetComponent<Enemy>();
             if (enemyRef != null)
             {
                 enemyRef.TakeDamage(currentGunContainer.gunData.damage);
+                impluseSource.GenerateImpulse(); 
             }
         }
     }

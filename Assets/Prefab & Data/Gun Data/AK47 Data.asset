@@ -15,4 +15,4 @@ MonoBehaviour:
   type: 1
   magazineAmmo: 30
   fireRate: 0.1
-  damage: 12
+  damage: 15
