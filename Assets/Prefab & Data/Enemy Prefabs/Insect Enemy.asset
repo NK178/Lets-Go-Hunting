@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: Insect Enemy
   m_EditorClassIdentifier: Assembly-CSharp::EnemyData
   type: 0
-  maxHealth: 35
+  maxHealth: 30
   damage: 10
   points: 100

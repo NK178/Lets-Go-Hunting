@@ -16,8 +16,11 @@ MonoBehaviour:
   enemyPrefab: {fileID: 7752439744088749315, guid: e24134e47c2fba647878386b148e63b9, type: 3}
   shipTargetPointName: ShipPoint
   spawnPointName: SwordFishSpawn
-  waveInterval: 1
+  waveIntervalMax: 1.5
+  waveIntervalMin: 0.9
   startingDelay: 0
+  spawnDensityMax: 2
+  spawnDensityMin: 1
   spawnDeviationAxisMax: {x: 2.92, y: 0, z: 0}
   axisSpawnOffset: {x: 0, y: 0, z: 0}
   followShipMovement: 1

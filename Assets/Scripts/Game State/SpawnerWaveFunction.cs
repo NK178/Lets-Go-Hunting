@@ -8,11 +8,16 @@ public class SpawnerWaveFunction : BaseWaveFunction
     [Header("Spawner Settings")]    
     [SerializeField] private Enemy enemyPrefab;
     [SerializeField] private string shipTargetPointName;
-    [SerializeField] private string spawnPointName; 
-    [SerializeField] private float waveInterval;
+    [SerializeField] private string spawnPointName;
+    //[SerializeField] private float waveInterval;
+    [SerializeField] private float waveIntervalMax;
+    [SerializeField] private float waveIntervalMin;
+    [SerializeField] private float startingDelay = 0;
+    [SerializeField] private int spawnDensityMax;
+    [SerializeField] private int spawnDensityMin;
 
-    [SerializeField] private float startingDelay = 0; 
 
+    [Header("Spawned Transform")]
     [SerializeField] private Vector3 spawnDeviationAxisMax;
     [SerializeField] private Vector3 axisSpawnOffset;
 
@@ -35,13 +40,18 @@ public class SpawnerWaveFunction : BaseWaveFunction
     private Transform targetSurface;
     private bool isCoroutineRunning = false;
 
+    private float waveInterval; 
+
+    //Fish = 1
+    //Insect = 0.8
+
     public override void Excute(SectionManager sectionManager)
     {
         spawnPoint = sectionManager.transform.Find(spawnPointName);
 
         sectionManager.StartCoroutine(BeginSpawnCoroutine(sectionManager));
 
-        //sectionManager.StartCoroutine(SpawnerCoroutine(spawnPoint));
+
 
         //maybe i can go find the target points instead 
         shipTransform = GameObject.FindGameObjectWithTag("Ship").gameObject.transform;
@@ -64,8 +74,7 @@ public class SpawnerWaveFunction : BaseWaveFunction
             }
         }
 
-
-           
+        waveInterval = Random.Range(waveIntervalMin, waveIntervalMax);
     }
 
     public override void Exit(SectionManager sectionManager)
@@ -86,19 +95,6 @@ public class SpawnerWaveFunction : BaseWaveFunction
         if (shipTransform == null)
             return;
 
-        ////Follow ship movement based on rotation i think is good 
-        //if (followShipMovement)
-        //{
-        //    Vector3 localOffset = new Vector3(followDirectionOffset.x, 0, followDirectionOffset.z);
-
-        //    //interesting function 
-        //    Vector3 rotatedOffset = shipTransform.TransformDirection(localOffset);
-
-        //    Vector3 newSpawnPosition = rotatedOffset + new Vector3(shipTransform.position.x, startingPosY, shipTransform.position.z);
-        //    spawnPoint.position = newSpawnPosition;
-        //}
-
-
         if (followShipMovement)
         {
             Vector3 newSpawnPosition = Vector3.zero;
@@ -117,7 +113,6 @@ public class SpawnerWaveFunction : BaseWaveFunction
 
             spawnPoint.position = newSpawnPosition;
         }
-
 
         if (followShipRotation)
         {
@@ -151,26 +146,35 @@ public class SpawnerWaveFunction : BaseWaveFunction
     {
         while (isCoroutineRunning)
         {
+            waveInterval = Random.Range(waveIntervalMin, waveIntervalMax);
             yield return new WaitForSeconds(waveInterval);
 
+            Vector3 xOffset = spawnPoint.right * axisSpawnOffset.x;
+            Vector3 yOffset = spawnPoint.up * axisSpawnOffset.y;
+            Vector3 zOffset = spawnPoint.forward * axisSpawnOffset.z;
+            Vector3 spawnOffsetVector = xOffset + yOffset + zOffset;
+
+            int spawnDensity = Random.Range(spawnDensityMin, spawnDensityMax + 1);
 
             Vector3 xDeviation = spawnPoint.right * Random.Range(-spawnDeviationAxisMax.x, spawnDeviationAxisMax.x);
             Vector3 yDeviation = spawnPoint.up * Random.Range(-spawnDeviationAxisMax.y, spawnDeviationAxisMax.y);
             Vector3 zDeviation = spawnPoint.forward * Random.Range(-spawnDeviationAxisMax.z, spawnDeviationAxisMax.z);
 
+            for (int i = 0; i < spawnDensity; i++)
+            {
+                float randomSpawnDelay = Random.Range(0f, 0.2f);
 
-            Vector3 xOffset = spawnPoint.right * axisSpawnOffset.x;
-            Vector3 yOffset = spawnPoint.up * axisSpawnOffset.y;
-            Vector3 zOffset = spawnPoint.forward * axisSpawnOffset.z;
+                //This will work for now 
+                //Deviation between enemies spawned together in the same batch 
+                float localDeviationFactor = 1.2f;  
+                Vector3 spawnDeviationVector = (xDeviation + yDeviation + zDeviation) * localDeviationFactor;
+                Vector3 objectSpawnPoint = spawnPoint.position + spawnDeviationVector + spawnOffsetVector;
 
-            Vector3 spawnDeviationVector = xDeviation + yDeviation + zDeviation;
-            Vector3 spawnOffsetVector = xOffset + yOffset + zOffset;    
+                //Should optimise this later in some object pool 
+                Enemy enemyObject = Instantiate(enemyPrefab, objectSpawnPoint, spawnPoint.rotation);
 
-            Vector3 objectSpawnPoint = spawnPoint.position + spawnDeviationVector + spawnOffsetVector;
-
-            //Should optimise this later in some object pool 
-            Enemy enemyObject = Instantiate(enemyPrefab, objectSpawnPoint, spawnPoint.rotation);
-
+                yield return new WaitForSeconds(randomSpawnDelay); 
+            }
 
             //For one time spawning, stop coroutine immedietly if wave interval = 0 
             if (waveInterval == 0)
@@ -178,4 +182,43 @@ public class SpawnerWaveFunction : BaseWaveFunction
         }
 
     }
+
+
+
+    //private IEnumerator SpawnerCoroutine(Transform spawnPoint)
+    //{
+    //    while (isCoroutineRunning)
+    //    {
+    //        yield return new WaitForSeconds(waveInterval);
+
+    //        Vector3 xOffset = spawnPoint.right * axisSpawnOffset.x;
+    //        Vector3 yOffset = spawnPoint.up * axisSpawnOffset.y;
+    //        Vector3 zOffset = spawnPoint.forward * axisSpawnOffset.z;
+    //        Vector3 spawnOffsetVector = xOffset + yOffset + zOffset;
+
+    //        int spawnDensity = Random.Range(spawnDensityMin, spawnDensityMax + 1);
+
+
+
+
+
+    //        Vector3 xDeviation = spawnPoint.right * Random.Range(-spawnDeviationAxisMax.x, spawnDeviationAxisMax.x);
+    //        Vector3 yDeviation = spawnPoint.up * Random.Range(-spawnDeviationAxisMax.y, spawnDeviationAxisMax.y);
+    //        Vector3 zDeviation = spawnPoint.forward * Random.Range(-spawnDeviationAxisMax.z, spawnDeviationAxisMax.z);
+
+    //        Vector3 spawnDeviationVector = xDeviation + yDeviation + zDeviation;
+    //        Vector3 objectSpawnPoint = spawnPoint.position + spawnDeviationVector + spawnOffsetVector;
+
+
+    //        //Should optimise this later in some object pool 
+    //        Enemy enemyObject = Instantiate(enemyPrefab, objectSpawnPoint, spawnPoint.rotation);
+
+
+    //        //For one time spawning, stop coroutine immedietly if wave interval = 0 
+    //        if (waveInterval == 0)
+    //            isCoroutineRunning = false;
+    //    }
+
+    //}
+
 }
