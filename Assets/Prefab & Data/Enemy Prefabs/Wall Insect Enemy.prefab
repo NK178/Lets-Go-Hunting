@@ -188,26 +188,28 @@ MonoBehaviour:
   enemyData: {fileID: 11400000, guid: d04f2b00595eb8b4f88829ab8d9d5cca, type: 2}
   animator: {fileID: 4178998396884746713}
   damageColour: {r: 0, g: 0, b: 0, a: 0}
-  fastMoveSpeed: 20
-  slowMoveSpeed: 15
-  catchUpDistance: 50
+  fastMoveSpeed: 27
+  cruiseMoveSpeed: 14
+  triggerAttackDistance: 5
   shipStarboardName: Starboard
   shipPortName: Port
-  followOffset: {x: 0, y: 9, z: 15}
-  targetPositionVarienceRange: 5
+  followOffset: {x: 0, y: 9, z: 17}
+  targettingOffset: {x: 0, y: -1, z: -1}
+  zAxisShipTargetVarienceRange: 2
+  targetPositionVarienceRange: 2.5
   clingWallTagName: ClingWall
   clingWallLayer:
     serializedVersion: 2
     m_Bits: 128
   raycastDistance: 2
   surfaceOffset: 0.5
-  maxAttackWaitTime: 5
-  minAttackWaitTime: 3
+  attackWaitTime: 0.5
   attackLeapFlightTime: 2
   leapGravity: -9.81
   boidDetectionRadius: 10
   seperationDistance: 3
   seperationStrength: 10
+  seperationFactor: 0.5
   alignmentDistance: 0
   alignmentStrengthFactor: 0
 --- !u!1 &1387658246911408084
@@ -507,7 +509,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.3, y: 1.3, z: 1.3}
+  m_LocalScale: {x: 1.1, y: 1.1, z: 1.1}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 2327581772287251280}
