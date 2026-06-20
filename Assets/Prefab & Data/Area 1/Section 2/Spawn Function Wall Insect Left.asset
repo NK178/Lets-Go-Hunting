@@ -17,11 +17,11 @@ MonoBehaviour:
   shipTargetPointName: ShipPoint
   spawnPointName: Insect Wall Spawn Left
   waveInterval: 0.8
+  startingDelay: 0
   spawnDeviationAxisMax: {x: 0, y: 8, z: 0}
   axisSpawnOffset: {x: 1, y: 0, z: 0}
-  spawnWidthDeviateRange: 0
   followShipMovement: 1
-  followDirectionOffset: {x: -21, y: 0, z: -23}
+  followDirectionOffset: {x: -21, y: 0, z: -27}
   projectMovementOnSurface: 1
   targetSurfaceTag: ClingWall
   targetSurfaceName: Cling Wall Left

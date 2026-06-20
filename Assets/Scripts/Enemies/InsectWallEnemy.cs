@@ -5,8 +5,6 @@ using UnityEngine;
 public class InsectWallEnemy : Enemy
 {
     [Header("Movement")]
-    [SerializeField] private float movementFactor;
-
     [SerializeField] private float fastMoveSpeed; 
     [SerializeField] private float slowMoveSpeed;
     [SerializeField] private float catchUpDistance; 
@@ -15,6 +13,10 @@ public class InsectWallEnemy : Enemy
     [SerializeField] private string shipStarboardName;
     [SerializeField] private string shipPortName;
     [SerializeField] private Vector3 followOffset;
+
+    //need some varience in targetting location 
+    [Range(0f, 5f)] 
+    [SerializeField] private float targetPositionVarienceRange; 
 
     [Header("Wall Mechanics")]
     [SerializeField] private string clingWallTagName;
@@ -58,7 +60,10 @@ public class InsectWallEnemy : Enemy
     private Vector3 wallHitPoint;
     private Vector3 wallPerpenNormal;
 
+    private float targetPositionVarience; 
+
     private bool shouldCatchUp;
+
 
 
 
@@ -130,6 +135,7 @@ public class InsectWallEnemy : Enemy
         hasAttacked = false;
         shouldAttack = false;
 
+        targetPositionVarience = Random.Range(-targetPositionVarienceRange, targetPositionVarienceRange);
     }
 
 
@@ -400,7 +406,12 @@ public class InsectWallEnemy : Enemy
         Vector3 vectorToFollowPoint = worldFollowPoint - wallHitPoint;
         float distToFollowPoint = Vector3.Dot(vectorToFollowPoint, wallNormal);
 
+        Vector3 wallUpVector = Vector3.ProjectOnPlane(Vector3.up, wallNormal).normalized; 
+
         wallFollowPoint = worldFollowPoint - (wallNormal * distToFollowPoint);
+
+        ////Varience 
+        wallFollowPoint += wallUpVector * targetPositionVarience; 
 
         Vector3 followPointVector = wallFollowPoint - transform.position;
 
