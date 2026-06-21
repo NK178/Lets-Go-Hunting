@@ -324,8 +324,12 @@ MonoBehaviour:
   seperationDistance: 3
   seperationStrength: 10
   seperationFactor: 0.5
-  alignmentDistance: 0
-  alignmentStrengthFactor: 0
+  alignmentDistance: 5
+  alignmentStrength: 7
+  alignmentFactor: 0.2
+  cohesionDistance: 10
+  cohesionStrength: 0
+  cohesionFactor: 0
 --- !u!1 &1387658246911408084
 GameObject:
   m_ObjectHideFlags: 0

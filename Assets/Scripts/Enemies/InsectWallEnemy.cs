@@ -36,14 +36,22 @@ public class InsectWallEnemy : Enemy
 
 
     [Header("Boid Behaviour")]
+    [Header("Boid Seperation")]
     [SerializeField] private float boidDetectionRadius; 
     [SerializeField] private float seperationDistance;
     [SerializeField] private float seperationStrength;
-    [Range(0f,1f)]
-    [SerializeField] private float seperationFactor;
+    [Range(0f,1f)] [SerializeField] private float seperationFactor;
 
+    [Header("Boid Alignment")]
     [SerializeField] private float alignmentDistance;
-    [SerializeField] private float alignmentStrengthFactor;
+    [SerializeField] private float alignmentStrength;
+    [Range(0f, 1f)] [SerializeField] private float alignmentFactor;
+
+    [Header("Boid Cohesion")]
+    [SerializeField] private float cohesionDistance;
+    [SerializeField] private float cohesionStrength;
+    [Range(0f, 1f)] [SerializeField] private float cohesionFactor;
+
 
     private bool shouldAttack;
     private bool hasAttacked; 
@@ -151,11 +159,12 @@ public class InsectWallEnemy : Enemy
         if (canAttack && !shouldAttack)
         {
             attackWaitTime -= Time.deltaTime;
+            if (attackWaitTime < 0)
+                shouldAttack = true;
         }
-        if (attackWaitTime < 0)
-            shouldAttack = true;
 
-        //normal normal movement 
+
+
         if (shouldAttack)
         {
             if (!hasAttacked)
@@ -169,24 +178,41 @@ public class InsectWallEnemy : Enemy
         }
         else
         {
-            RaycastHit[] hitTargets = Physics.SphereCastAll(transform.position, boidDetectionRadius, transform.up);
-            List<GameObject> otherBoids = new List<GameObject>();
+
+            //Start from the largest distance which should be the 
+            RaycastHit[] hitTargets = Physics.SphereCastAll(transform.position, cohesionDistance, transform.up);
+            //List<GameObject> otherBoids = new List<GameObject>();
+
+
+            List<GameObject> cohesionBoids = new List<GameObject>();
+            List<GameObject> alignmentBoids = new List<GameObject>();
+            List<GameObject> seperationBoids = new List<GameObject>();
             foreach (RaycastHit target in hitTargets)
             {
                 GameObject targetObject = target.collider.gameObject;
                 //Include all bugs that arent in the middle of attacking 
                 if (targetObject.TryGetComponent<InsectWallEnemy>(out InsectWallEnemy enemy))
                 {
-                    if (!enemy.IsAttacking())
-                        otherBoids.Add(targetObject);
+                    if (enemy.IsAttacking())
+                        continue;
+                    float sqrDistance = (targetObject.transform.position - transform.position).sqrMagnitude;
+
+                    if (sqrDistance < cohesionDistance * cohesionDistance)
+                        cohesionBoids.Add(targetObject);
+
+                    if (sqrDistance < alignmentDistance * alignmentDistance)
+                        alignmentBoids.Add(targetObject);
+
+                    if (sqrDistance < seperationDistance * seperationDistance)
+                        seperationBoids.Add(targetObject);
                 }
             }
 
-            Vector3 seperationVector = BoidSeperation(otherBoids) * seperationFactor;
-            //Vector3 alignmentVector = BoidAlignment(otherBoids); 
+            Vector3 seperationVector = BoidSeperation(seperationBoids) * seperationFactor;
+            Vector3 alignmentVector = BoidAlignment(alignmentBoids) * alignmentFactor;
             //currentVelocity = HandleWallMovement() + seperationVector + alignmentVector
 
-            currentVelocity = HandleWallMovement() + seperationVector;
+            currentVelocity = HandleWallMovement() + seperationVector + alignmentVector;
             //Debug.Log("alignment: " + alignmentVector);
         }
 
@@ -235,7 +261,7 @@ public class InsectWallEnemy : Enemy
             return Vector3.zero;
         Vector3 resultingVector = Vector3.zero;
 
-        float sqrAlignmentDistance = seperationDistance * seperationDistance;
+        float sqrAlignmentDistance = alignmentDistance * alignmentDistance;
 
         int boidInRange = 0;
 
@@ -255,8 +281,12 @@ public class InsectWallEnemy : Enemy
             return resultingVector;
 
         averageVelocity /= boidInRange; 
+         
+        Vector3 projectedVector = Vector3.ProjectOnPlane(averageVelocity, wallNormal);
+        resultingVector = projectedVector.normalized * alignmentStrength;
 
-        resultingVector = Vector3.ProjectOnPlane(averageVelocity, wallNormal);
+
+        //Debug.Log($"MY VELOCITY: {GetCurrentVelocity()} RESULT VECTOR: {resultingVector}"); 
         return resultingVector;
     }
 
@@ -302,6 +332,8 @@ public class InsectWallEnemy : Enemy
         //trigger attack 
         if (distance < triggerAttackDistance)
             canAttack = true;
+
+        Debug.Log($"DISTANCE: {distance} Trigger: {triggerAttackDistance}");
 
         if (canAttack)
             currentMoveSpeed = cruiseMoveSpeed;
@@ -410,23 +442,72 @@ public class InsectWallEnemy : Enemy
     }
 
 
-
-    //private float CalculateBaseMovementSpeed(Vector3 followVector)
+    //void FixedUpdate()
     //{
-    //    float distance = followVector.magnitude;
+    //    if (!isActive)
+    //        return;
 
-    //    print("DIST: " + distance);
-    //    if (distance > catchUpDistance)
-    //        shouldCatchUp = true;
+    //    if (!isAlive && gameObject != null)
+    //    {
+    //        isActive = false;
+    //        Destroy(gameObject);
+    //        return;
+    //    }
 
-    //    float factor = 10f;
-    //    if (distance < factor)
-    //        shouldCatchUp = false;
+    //    //run down timer when in range
+    //    if (canAttack && !shouldAttack)
+    //    {
+    //        attackWaitTime -= Time.deltaTime;
+    //    }
+    //    if (attackWaitTime < 0)
+    //        shouldAttack = true;
 
-    //    if (shouldCatchUp)
-    //        return fastMoveSpeed;
+    //    //normal normal movement 
+    //    if (shouldAttack)
+    //    {
+    //        if (!hasAttacked)
+    //            currentVelocity = HandleLeapAttack();
+    //        currentVelocity.y += leapGravity * Time.deltaTime;
+
+    //        transform.rotation = Quaternion.LookRotation(currentVelocity.normalized);
+
+    //        if (animator != null)
+    //            animator.enabled = false;
+    //    }
     //    else
-    //        return slowMoveSpeed;
+    //    {
+    //        RaycastHit[] hitTargets = Physics.SphereCastAll(transform.position, boidDetectionRadius, transform.up);
+    //        List<GameObject> otherBoids = new List<GameObject>();
+    //        foreach (RaycastHit target in hitTargets)
+    //        {
+    //            GameObject targetObject = target.collider.gameObject;
+    //            //Include all bugs that arent in the middle of attacking 
+    //            if (targetObject.TryGetComponent<InsectWallEnemy>(out InsectWallEnemy enemy))
+    //            {
+    //                if (!enemy.IsAttacking())
+    //                    otherBoids.Add(targetObject);
+    //            }
+    //        }
+
+    //        Vector3 seperationVector = BoidSeperation(otherBoids) * seperationFactor;
+    //        //Vector3 alignmentVector = BoidAlignment(otherBoids); 
+    //        //currentVelocity = HandleWallMovement() + seperationVector + alignmentVector
+
+    //        currentVelocity = HandleWallMovement() + seperationVector;
+    //        //Debug.Log("alignment: " + alignmentVector);
+    //    }
+
+    //    transform.position += currentVelocity * Time.deltaTime;
+
+    //    if (hasReachedTheEdge())
+    //        isAlive = false;
+
+    //    Debug.DrawLine(transform.position, wallFollowPoint, Color.red);
+    //    Debug.DrawLine(transform.position, worldFollowPoint, Color.yellow);
+
+    //    //Debug.DrawLine(transform.position, transform.position + transform.right * raycastDistance, Color.red);
+    //    //Debug.DrawLine(transform.position, transform.position + -transform.right * raycastDistance, Color.red);
     //}
+
 
 }
