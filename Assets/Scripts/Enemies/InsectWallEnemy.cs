@@ -1,0 +1,513 @@
+using System.Collections.Generic;
+using UnityEngine;
+
+//basically my boi will instanly find the wall and cling to it 
+public class InsectWallEnemy : Enemy
+{
+    [Header("Movement")]
+    [SerializeField] private float fastMoveSpeed; 
+    [SerializeField] private float cruiseMoveSpeed;
+    [SerializeField] private float triggerAttackDistance; 
+
+    [Header("Targetting")]
+    [SerializeField] private string shipStarboardName;
+    [SerializeField] private string shipPortName;
+
+    [SerializeField] private Vector3 followOffset;
+    [SerializeField] private Vector3 targettingOffset;
+
+    [Range(0f, 5f)]
+    [SerializeField] private float zAxisShipTargetVarienceRange;
+
+    //need some varience in targetting location 
+    [Range(0f, 5f)] 
+    [SerializeField] private float targetPositionVarienceRange; 
+
+    [Header("Wall Mechanics")]
+    [SerializeField] private string clingWallTagName;
+    [SerializeField] private LayerMask clingWallLayer;
+    [SerializeField] private float raycastDistance;
+    [SerializeField] private float surfaceOffset;
+
+    [Header("Attack Mechanics")]
+    [SerializeField] private float attackWaitTime; 
+    [SerializeField] private float attackLeapFlightTime;
+    [SerializeField] private float leapGravity;
+
+
+    [Header("Boid Behaviour")]
+    [Header("Boid Seperation")]
+    [SerializeField] private float boidDetectionRadius; 
+    [SerializeField] private float seperationDistance;
+    [SerializeField] private float seperationStrength;
+    [Range(0f,1f)] [SerializeField] private float seperationFactor;
+
+    [Header("Boid Alignment")]
+    [SerializeField] private float alignmentDistance;
+    [SerializeField] private float alignmentStrength;
+    [Range(0f, 1f)] [SerializeField] private float alignmentFactor;
+
+    [Header("Boid Cohesion")]
+    [SerializeField] private float cohesionDistance;
+    [SerializeField] private float cohesionStrength;
+    [Range(0f, 1f)] [SerializeField] private float cohesionFactor;
+
+
+    private bool shouldAttack;
+    private bool hasAttacked; 
+
+    private Transform endTarget;
+    private Transform shipTransform;
+    private Transform targetSurface;
+    private Ship shipRef;
+    //private GameObject wallRef;
+
+    private Vector3 currentVelocity; 
+
+    private Vector3 worldFollowPoint;
+    private Vector3 wallFollowPoint;
+
+    private Vector3 wallNormal;
+    private Vector3 wallHitPoint;
+
+    private float targetPositionVarience; 
+
+
+    //once reach the end, can start attack timer 
+    private bool canAttack;
+
+    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    protected override void Start()
+    {
+        base.Start();
+        //double raycast to find the wall 
+        bool wallFound = false;
+        bool isRightWall = false;
+        RaycastHit hitInfo;
+        if (Physics.Raycast(transform.position, transform.right, out hitInfo, raycastDistance, clingWallLayer))
+            wallFound = isRightWall = true;
+
+        if (!wallFound)
+        {
+            if (Physics.Raycast(transform.position, -transform.right, out hitInfo, raycastDistance, clingWallLayer))
+                wallFound = true;
+        }
+
+        if (wallFound && hitInfo.collider != null)
+        {
+            //Debug.Log("WALL FOUND");
+            transform.rotation = Quaternion.FromToRotation(transform.up, hitInfo.normal);
+            Vector3 offsetVector = transform.up * surfaceOffset;
+            transform.position = hitInfo.point + offsetVector;
+            wallNormal = hitInfo.normal;
+            wallHitPoint = hitInfo.point;
+
+            targetSurface = hitInfo.collider.transform;
+            //find this vector 
+            //wallPerpenNormal = Vector3.Cross(wallNormal, hitInfo.collider.transform.forward);
+        }
+
+        if (!wallFound)
+        {
+            Debug.Log("WALL NOT FOUND");
+            Destroy(gameObject);
+            return;
+        }
+
+        string endTargetName = string.Empty;
+
+        //Do some left right logic here 
+        if (isRightWall)
+            endTargetName = shipStarboardName;
+        else
+            endTargetName = shipPortName;
+
+        GameObject[] shipTargetPoints = GameObject.FindGameObjectsWithTag("ShipPoint");
+        foreach (GameObject targetPt in shipTargetPoints)
+        {
+            string pointName = targetPt.name;
+            if (pointName.Contains(endTargetName))
+            {
+                Debug.Log("END TARGET: " + pointName);
+                endTarget = targetPt.transform;
+                break;
+            }
+        }
+
+
+        canAttack = shouldAttack = hasAttacked = false;
+
+        shipTransform = GameObject.FindGameObjectWithTag("Ship").transform;
+        shipRef = shipTransform.GetComponent<Ship>();
+        targetPositionVarience = Random.Range(-targetPositionVarienceRange, targetPositionVarienceRange);
+    }
+
+
+    void FixedUpdate()
+    {
+        if (!isActive)
+            return;
+
+        if (!isAlive && gameObject != null)
+        {
+            isActive = false;
+            Destroy(gameObject);
+            return;
+        }
+
+        //run down timer when in range
+        if (canAttack && !shouldAttack)
+        {
+            attackWaitTime -= Time.deltaTime;
+            if (attackWaitTime < 0)
+                shouldAttack = true;
+        }
+
+
+
+        if (shouldAttack)
+        {
+            if (!hasAttacked)
+                currentVelocity = HandleLeapAttack();
+            currentVelocity.y += leapGravity * Time.deltaTime;
+
+            transform.rotation = Quaternion.LookRotation(currentVelocity.normalized);
+
+            if (animator != null)
+                animator.enabled = false;
+        }
+        else
+        {
+
+            //Start from the largest distance which should be the 
+            RaycastHit[] hitTargets = Physics.SphereCastAll(transform.position, cohesionDistance, transform.up);
+            //List<GameObject> otherBoids = new List<GameObject>();
+
+
+            List<GameObject> cohesionBoids = new List<GameObject>();
+            List<GameObject> alignmentBoids = new List<GameObject>();
+            List<GameObject> seperationBoids = new List<GameObject>();
+            foreach (RaycastHit target in hitTargets)
+            {
+                GameObject targetObject = target.collider.gameObject;
+                //Include all bugs that arent in the middle of attacking 
+                if (targetObject.TryGetComponent<InsectWallEnemy>(out InsectWallEnemy enemy))
+                {
+                    if (enemy.IsAttacking())
+                        continue;
+                    float sqrDistance = (targetObject.transform.position - transform.position).sqrMagnitude;
+
+                    if (sqrDistance < cohesionDistance * cohesionDistance)
+                        cohesionBoids.Add(targetObject);
+
+                    if (sqrDistance < alignmentDistance * alignmentDistance)
+                        alignmentBoids.Add(targetObject);
+
+                    if (sqrDistance < seperationDistance * seperationDistance)
+                        seperationBoids.Add(targetObject);
+                }
+            }
+
+            Vector3 seperationVector = BoidSeperation(seperationBoids) * seperationFactor;
+            Vector3 alignmentVector = BoidAlignment(alignmentBoids) * alignmentFactor;
+            //currentVelocity = HandleWallMovement() + seperationVector + alignmentVector
+
+            currentVelocity = HandleWallMovement() + seperationVector + alignmentVector;
+            //Debug.Log("alignment: " + alignmentVector);
+        }
+
+        transform.position += currentVelocity * Time.deltaTime;
+
+        if (hasReachedTheEdge())
+            isAlive = false;
+
+        Debug.DrawLine(transform.position, wallFollowPoint, Color.red);
+        Debug.DrawLine(transform.position, worldFollowPoint, Color.yellow);
+
+        //Debug.DrawLine(transform.position, transform.position + transform.right * raycastDistance, Color.red);
+        //Debug.DrawLine(transform.position, transform.position + -transform.right * raycastDistance, Color.red);
+    }
+
+
+
+    private Vector3 BoidSeperation(List<GameObject> boids)
+    {
+        if (boids.Count == 0)
+            return Vector3.zero;
+
+        Vector3 resultingVector = Vector3.zero;
+
+        float sqrSeperationDistance = seperationDistance * seperationDistance;
+        foreach (GameObject boid in boids)
+        {
+            Vector3 direction = (boid.transform.position - transform.position).normalized;
+            float sqrDistance = (boid.transform.position - transform.position).sqrMagnitude;
+
+            if (sqrDistance < sqrSeperationDistance)
+            {
+                resultingVector += -direction * seperationStrength;
+                float proximityMultiplier = 1.0f - (Mathf.Sqrt(sqrDistance) / seperationDistance);
+                resultingVector += direction * (seperationStrength * proximityMultiplier);
+            }
+        }
+
+        resultingVector = Vector3.ProjectOnPlane(resultingVector, wallNormal);
+        return resultingVector;
+    }
+
+    private Vector3 BoidAlignment(List<GameObject> boids)
+    {
+        if (boids.Count == 0)
+            return Vector3.zero;
+        Vector3 resultingVector = Vector3.zero;
+
+        float sqrAlignmentDistance = alignmentDistance * alignmentDistance;
+
+        int boidInRange = 0;
+
+        Vector3 averageVelocity = Vector3.zero;
+        foreach (GameObject boid in boids)
+        {
+            float sqrDistance = (boid.transform.position - transform.position).sqrMagnitude;
+
+            if (sqrDistance < sqrAlignmentDistance)
+            {
+                averageVelocity += boid.GetComponent<InsectWallEnemy>().GetCurrentVelocity();
+                boidInRange++;
+            }
+        }
+
+        if (boidInRange == 0)
+            return resultingVector;
+
+        averageVelocity /= boidInRange; 
+         
+        Vector3 projectedVector = Vector3.ProjectOnPlane(averageVelocity, wallNormal);
+        resultingVector = projectedVector.normalized * alignmentStrength;
+
+
+        //Debug.Log($"MY VELOCITY: {GetCurrentVelocity()} RESULT VECTOR: {resultingVector}"); 
+        return resultingVector;
+    }
+
+    private bool hasReachedTheEdge()
+    {
+        MeshRenderer meshRenderer = targetSurface.GetComponent<MeshRenderer>();
+        Collider surfaceCollider = targetSurface.GetComponent<Collider>();
+        Vector3 meshExtents = meshRenderer.localBounds.extents;
+        Vector3 meshCenter = meshRenderer.localBounds.center;
+
+        Vector3 projectedPoint = surfaceCollider.ClosestPoint(transform.position);
+        Vector3 localPoint = targetSurface.InverseTransformPoint(projectedPoint);
+
+        float margin = 0.03f;
+        bool offEdgeZ = Mathf.Abs(localPoint.z - meshCenter.z) >= meshExtents.z - margin;
+
+        if (offEdgeZ)
+        {
+            return true;
+        }
+        return false;
+    }
+
+
+    private Vector3 HandleWallMovement()
+    {
+        Vector3 resultingVelocity = Vector3.zero;
+
+        //Calculating wall follow point 
+        worldFollowPoint = shipTransform.position + followOffset;
+        Vector3 vectorToFollowPoint = worldFollowPoint - wallHitPoint;
+        float distToFollowPoint = Vector3.Dot(vectorToFollowPoint, wallNormal);
+        Vector3 wallUpVector = Vector3.ProjectOnPlane(Vector3.up, wallNormal).normalized; 
+        wallFollowPoint = worldFollowPoint - (wallNormal * distToFollowPoint);
+
+        //Varience 
+        wallFollowPoint += wallUpVector * targetPositionVarience; 
+        Vector3 followPointVector = wallFollowPoint - transform.position;
+
+        float distance = followPointVector.magnitude;
+        float currentMoveSpeed = 0f;
+
+        //trigger attack 
+        if (distance < triggerAttackDistance)
+            canAttack = true;
+
+        Debug.Log($"DISTANCE: {distance} Trigger: {triggerAttackDistance}");
+
+        if (canAttack)
+            currentMoveSpeed = cruiseMoveSpeed;
+        else
+            currentMoveSpeed = fastMoveSpeed;
+
+        resultingVelocity = followPointVector.normalized * currentMoveSpeed;
+
+        return resultingVelocity; 
+    }
+
+    private Vector3 HandleLeapAttack()
+    {
+        //Debug.Log("LEAPING");
+        Vector3 resultingVector = Vector3.zero;
+        Vector3 shipVelocity = shipRef.GetCurrentVelocity();
+
+        //maybe at some point, I can make this relative to the height of the insect
+        float randomZAxisVarience = Random.Range(-zAxisShipTargetVarienceRange, zAxisShipTargetVarienceRange);
+        Vector3 zAxisVarienceVector = endTarget.transform.forward * randomZAxisVarience;
+        Vector3 targetOffset = targettingOffset + zAxisVarienceVector;
+        Vector3 targetPosition = endTarget.transform.position + targetOffset;
+
+        resultingVector = CalculateForce(targetPosition, shipVelocity);
+        hasAttacked = true; 
+        return resultingVector;
+    }
+
+
+    public Vector3 CalculateForce(Vector3 targetPos, Vector3 targetVelocity)
+    {
+        Vector3 predictedPos = targetPos + (targetVelocity * attackLeapFlightTime);
+
+        Vector3 directionToTarget = (predictedPos - transform.position);
+        float horizontalDistance = new Vector3(directionToTarget.x, 0, directionToTarget.z).magnitude;
+
+        float horizontalSpeed = horizontalDistance / attackLeapFlightTime;
+
+        float deltaY = predictedPos.y - transform.position.y;
+        float gravity = Mathf.Abs(leapGravity);
+
+        // Standard projectile motion formula for initial vertical velocity
+        float verticalSpeed = (deltaY + 0.5f * gravity * attackLeapFlightTime * attackLeapFlightTime) / attackLeapFlightTime;
+
+        Vector3 normalizeHorizontal = new Vector3(directionToTarget.x, 0, directionToTarget.z).normalized;
+
+        return new Vector3(
+            normalizeHorizontal.x * horizontalSpeed,
+            verticalSpeed,
+            normalizeHorizontal.z * horizontalSpeed
+        );
+    }
+
+
+ 
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.gameObject.CompareTag("Ship"))
+        {
+            Ship shipRef = other.gameObject.GetComponentInParent<Ship>();
+            if (shipRef != null)
+            {
+                shipRef.DealDamage(enemyData.damage);
+                Destroy(gameObject);
+            }
+        }
+
+    }
+
+
+    public bool IsAttacking()
+    {
+        return hasAttacked;
+    }
+
+    public Vector3 GetCurrentVelocity()
+    {
+        return currentVelocity;
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.yellow;
+
+        // Draw the starting sphere
+        //Gizmos.DrawWireSphere(transform.position, boidDetectionRadius);
+
+        // Draw the cast path (optional: change '10f' to your desired visual distance)
+        Vector3 endPoint = transform.position + (transform.up * 1f);
+        Gizmos.DrawLine(transform.position, endPoint);
+
+        //// Draw the end of the visual range
+        //Gizmos.DrawWireSphere(endPoint, boidDetectionRadius);
+
+
+        if (targetSurface == null) return;
+
+        Collider surfaceColldier = targetSurface.GetComponent<Collider>();
+        //Vector3 projectedPoint = surfaceColldier.ClosestPoint(transform.position);
+        Vector3 halfSize = surfaceColldier.bounds.extents;
+        Vector3 rightEdgeLocal = new Vector3(0, 0, halfSize.z);
+        Vector3 rightEdgeWorld = targetSurface.TransformPoint(rightEdgeLocal);
+
+        Gizmos.color = Color.green;
+        //Gizmos.DrawSphere(rightEdgeWorld, 0.2f);
+    }
+
+
+    //void FixedUpdate()
+    //{
+    //    if (!isActive)
+    //        return;
+
+    //    if (!isAlive && gameObject != null)
+    //    {
+    //        isActive = false;
+    //        Destroy(gameObject);
+    //        return;
+    //    }
+
+    //    //run down timer when in range
+    //    if (canAttack && !shouldAttack)
+    //    {
+    //        attackWaitTime -= Time.deltaTime;
+    //    }
+    //    if (attackWaitTime < 0)
+    //        shouldAttack = true;
+
+    //    //normal normal movement 
+    //    if (shouldAttack)
+    //    {
+    //        if (!hasAttacked)
+    //            currentVelocity = HandleLeapAttack();
+    //        currentVelocity.y += leapGravity * Time.deltaTime;
+
+    //        transform.rotation = Quaternion.LookRotation(currentVelocity.normalized);
+
+    //        if (animator != null)
+    //            animator.enabled = false;
+    //    }
+    //    else
+    //    {
+    //        RaycastHit[] hitTargets = Physics.SphereCastAll(transform.position, boidDetectionRadius, transform.up);
+    //        List<GameObject> otherBoids = new List<GameObject>();
+    //        foreach (RaycastHit target in hitTargets)
+    //        {
+    //            GameObject targetObject = target.collider.gameObject;
+    //            //Include all bugs that arent in the middle of attacking 
+    //            if (targetObject.TryGetComponent<InsectWallEnemy>(out InsectWallEnemy enemy))
+    //            {
+    //                if (!enemy.IsAttacking())
+    //                    otherBoids.Add(targetObject);
+    //            }
+    //        }
+
+    //        Vector3 seperationVector = BoidSeperation(otherBoids) * seperationFactor;
+    //        //Vector3 alignmentVector = BoidAlignment(otherBoids); 
+    //        //currentVelocity = HandleWallMovement() + seperationVector + alignmentVector
+
+    //        currentVelocity = HandleWallMovement() + seperationVector;
+    //        //Debug.Log("alignment: " + alignmentVector);
+    //    }
+
+    //    transform.position += currentVelocity * Time.deltaTime;
+
+    //    if (hasReachedTheEdge())
+    //        isAlive = false;
+
+    //    Debug.DrawLine(transform.position, wallFollowPoint, Color.red);
+    //    Debug.DrawLine(transform.position, worldFollowPoint, Color.yellow);
+
+    //    //Debug.DrawLine(transform.position, transform.position + transform.right * raycastDistance, Color.red);
+    //    //Debug.DrawLine(transform.position, transform.position + -transform.right * raycastDistance, Color.red);
+    //}
+
+
+}
